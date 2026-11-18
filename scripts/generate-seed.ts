@@ -3,7 +3,6 @@
 //   - a NEW template is inserted hidden (is_active = false): an admin sets price and copy, then publishes;
 //   - an EXISTING template only gets its code-owned fields updated (size, fps, duration, schema,
 //     code_hash). Price, name, copy, tags, flags and order belong to the admin panel and are never touched.
-// Locally, supabase/seed.dev.sql then publishes everything so the store isn't empty after db:reset.
 // Run with: npm run seed:generate   (Node 22.6+ strips the TypeScript types)
 import { createHash } from 'node:crypto';
 import { writeFileSync } from 'node:fs';

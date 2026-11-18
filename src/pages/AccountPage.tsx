@@ -132,11 +132,6 @@ export const AccountPage = () => {
             <Button className="mt-3 w-full" disabled={busy || code.length !== 6} onClick={() => submitCode(code)}>
               {busy ? t('Checking…') : t('Sign in')}
             </Button>
-            {import.meta.env.DEV ? (
-              <a href="http://localhost:54324" target="_blank" rel="noreferrer" className="mt-3 block text-center text-sm font-semibold text-primary">
-                {t('Open local email inbox')}
-              </a>
-            ) : null}
             <Button variant="ghost" onClick={() => { setSentTo(null); setCode(''); setError(null); }} className="mt-1 w-full">
               {t('Use a different email')}
             </Button>

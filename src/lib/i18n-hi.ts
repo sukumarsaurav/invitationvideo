@@ -297,7 +297,6 @@ export const HI: Record<string, string> = {
   'We sent it to {email}.': 'हमने इसे {email} पर भेजा है।',
   '6-digit code': '6 अंकों का कोड',
   'Checking…': 'जांच रहे हैं…',
-  'Open local email inbox': 'लोकल ईमेल इनबॉक्स खोलें',
   'Use a different email': 'दूसरा ईमेल इस्तेमाल करें',
   "That code didn't work. Check the latest email, or send a new code.": 'यह कोड काम नहीं किया। नया ईमेल देखें, या नया कोड मंगाएं।',
   'Sign in to keep your videos': 'अपने वीडियो रखने के लिए साइन इन करें',

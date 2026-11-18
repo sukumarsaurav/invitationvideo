@@ -17,21 +17,20 @@ preview, and download an HD MP4 that is rendered **in their own browser** with R
 
 ## Run locally
 
-Needs Node 22.6+ and Docker.
+Needs Node 22.6+.
 
 ```bash
 npm install
-npm run dev            # app on http://localhost:5173
+cp .env.example .env.local   # then paste the publishable key
+npm run dev                  # app on http://localhost:5173
 ```
 
-Local database (first start downloads Docker images):
+There is no local database: `npm run dev` talks to the hosted Supabase project (`invitation-videos`).
+Anything you do while developing is real: drafts land in the live database, sign-in codes go to real
+inboxes, and admin changes (prices, publishing, settings) show on the live site straight away.
 
-```bash
-npm run db:start       # Postgres, Auth, Studio (http://localhost:54323), email inbox (http://localhost:54324)
-npm run db:reset       # re-apply migrations + seed
-```
-
-Then copy `.env.example` to `.env.local` and paste the anon key printed by `supabase status`.
+**Schema changes:** add a migration in `supabase/migrations/`, then `npm run db:push` (link once with
+`supabase link --project-ref clhfqyyqjwcrgpfrplyy`). Test risky changes on a Supabase branch first.
 
 ## Build and deploy (Vercel)
 
@@ -103,7 +102,7 @@ service-role/secret key or a Razorpay secret in a `VITE_` variable.
 2. Add its meta to `src/templates/metas.ts` and its definition to `src/templates/registry.ts`.
    Give it `tags` (from `src/templates/taxonomy.ts`), and optionally `trending` / `popularity`.
    These are only starting values: once seeded, the admin panel owns price, name, copy, tags and flags.
-3. Run `npm run seed:generate` then `npm run db:reset` (locally, `seed.dev.sql` publishes everything).
+3. Run `npm run seed:generate`.
 4. Deploy, then apply `supabase/seed.sql` to the hosted project. The template arrives **hidden**: open
    `/admin/templates`, set its price and copy, check the preview, and press **Publish**. Re-running the
    seed later only updates code-owned fields (size, fps, duration, schema), never admin edits.

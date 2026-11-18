@@ -227,7 +227,7 @@ export const createDraft = async (templateSlug: string, data: VideoData): Promis
   if (state.userId && supabase) {
     const { bySlug } = await getTemplateIds();
     const templateId = bySlug.get(templateSlug);
-    if (!templateId) throw new Error(`Template "${templateSlug}" is not in the database. Run npm run db:reset.`);
+    if (!templateId) throw new Error(`Template "${templateSlug}" is not in the database. Apply supabase/seed.sql to the Supabase project.`);
     const { data: row, error } = await supabase
       .from('user_videos')
       .insert({ id: draft.id, template_id: templateId, data })
