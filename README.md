@@ -33,18 +33,36 @@ npm run db:reset       # re-apply migrations + seed
 
 Then copy `.env.example` to `.env.local` and paste the anon key printed by `supabase status`.
 
-## Build and deploy (Cloudflare Pages)
+## Build and deploy (Vercel)
 
 `npm run build` runs four steps: sitemap + robots.txt → typecheck → `vite build` → pre-render.
 Pre-rendering (`scripts/prerender.ts`) writes an HTML file per public page (`dist/tags/hindu-wedding.html`
 etc.) with that page's title, description, canonical URL, social preview tags, structured data and
 its text and links, so search engines and WhatsApp previews see real content. React replaces it on load.
 
-Cloudflare Pages settings: build command `npm run build`, output directory `dist`. `dist/_redirects`
-sends private routes (`/editor/*`, `/render/*`, `/p/*`, `/account`, `/my-videos`) to a plain,
-non-indexed shell. Check locally with `npm run preview:static` (serves `dist/` the way Pages does).
-After the first deploy, confirm `/editor/anything` shows the app (not the home page) — that verifies
-the `_redirects` rewrite.
+`vercel.json` holds the hosting rules (framework Vite, build `npm run build`, output `dist`):
+- `cleanUrls`: `/tags/hindu-wedding` is served from `tags/hindu-wedding.html` with no redirect.
+- Private routes (`/editor/*`, `/render/*`, `/p/*`, `/account`, `/my-videos`) and unknown URLs are
+  rewritten to `spa.html`, a plain non-indexed app shell.
+- Long-term caching for hashed files in `/assets/`, plus basic security headers.
+
+Node 24 is pinned in `package.json` (`engines`): the build scripts run TypeScript directly.
+Check the output locally with `npm run preview:static` (serves `dist/` following `vercel.json`).
+
+### Vercel environment variables
+
+Set these in Vercel → Project → Settings → Environment Variables (Production and Preview).
+They override `.env.production`.
+
+| Name | Value |
+| --- | --- |
+| `VITE_SUPABASE_URL` | `https://clhfqyyqjwcrgpfrplyy.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | the project's publishable key (`sb_publishable_…`, Supabase → Project Settings → API Keys) |
+| `VITE_GOOGLE_AUTH_ENABLED` | `false` (set `true` once Google sign-in is configured in Supabase) |
+| `VITE_SUPPORT_WHATSAPP` | optional: support number, digits with country code, e.g. `919876543210` |
+
+All are public (`VITE_` values are built into the browser bundle). Never put the Supabase
+service-role/secret key or a Razorpay secret in a `VITE_` variable.
 
 ## Before going live
 
@@ -61,7 +79,9 @@ the `_redirects` rewrite.
   If someone later saves *Project Settings → Data API → Exposed schemas* without `invites`, the API
   answers `PGRST106 Invalid schema: invites` and the app can't load data: add `invites` there, or re-run the SQL.
 - **Auth URLs:** Authentication → URL Configuration → Site URL `https://invitationvideos.com`,
-  redirect URLs `https://invitationvideos.com/**` and `http://localhost:5173/**`.
+  redirect URLs `https://invitationvideos.com/**`, `http://localhost:5173/**`, and your Vercel
+  preview URLs, e.g. `https://invitationvideo-*-<your-vercel-team>.vercel.app/**`. Avoid
+  `https://*.vercel.app/**`: it would let any Vercel site receive sign-in redirects.
 
 ## Adding a template
 

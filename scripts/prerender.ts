@@ -6,8 +6,8 @@
 // When the app loads, React replaces #root with the full interactive page, so visitors get the
 // same page as before, just with content painted sooner.
 //
-// Private pages (editor, download, shared previews, account) get a plain app shell instead
-// (dist/spa.html, wired up by dist/_redirects on Cloudflare Pages) so they never show home content.
+// Private pages (editor, download, shared previews, account) and unknown URLs get a plain app shell
+// instead (dist/spa.html, wired up by the rewrites in vercel.json) so they never show home content.
 //
 // Run with: node scripts/prerender.ts   (part of `npm run build`)
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -216,8 +216,8 @@ const spa = shell
   .replace(/<title>[\s\S]*?<\/title>/, `<title>${SITE_NAME}</title>`)
   .replace('</head>', '    <meta name="robots" content="noindex, nofollow" />\n  </head>');
 
-// Pages are written as <path>.html: Cloudflare Pages serves /tags/x from tags/x.html with no
-// redirect, matching the canonical URL (a folder index would redirect to /tags/x/ first).
+// Pages are written as <path>.html: with "cleanUrls" (vercel.json) /tags/x is served from tags/x.html
+// with no redirect, matching the canonical URL.
 for (const p of pages) {
   const file = p.path === '/' ? dist('index.html') : dist(`${p.path.slice(1)}.html`);
   mkdirSync(dirname(file), { recursive: true });
@@ -225,8 +225,7 @@ for (const p of pages) {
 }
 writeFileSync(dist('spa.html'), spa);
 
-// Cloudflare Pages: serve the plain shell for private routes (200 = rewrite, the URL stays the same).
-// Anything else that has no file falls back to index.html (Pages' single-page-app mode).
+// Same rules for Cloudflare Pages, in case the site is ever hosted there (Vercel ignores this file).
 writeFileSync(
   dist('_redirects'),
   ['/editor/*  /spa.html  200', '/render/*  /spa.html  200', '/p/*  /spa.html  200', '/account  /spa.html  200', '/my-videos  /spa.html  200', ''].join('\n'),
