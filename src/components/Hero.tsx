@@ -83,7 +83,11 @@ export const Hero = () => {
       {/* Stage: soft backdrop, arches, and the templates themselves */}
       {main ? (
         <div className="relative mx-auto h-[440px] max-w-3xl md:h-[520px]">
-          <div className="absolute inset-x-0 bottom-0 top-10 bg-gradient-to-b from-transparent via-[#F6E3D4] to-[#EFD2C0]" aria-hidden />
+          {/* Fades out at the sides so the backdrop has no hard edges on wide screens. */}
+          <div
+            className="absolute inset-x-0 bottom-0 top-10 bg-gradient-to-b from-transparent via-[#F6E3D4] to-[#EFD2C0] [mask-image:linear-gradient(to_right,transparent,black_18%,black_82%,transparent)]"
+            aria-hidden
+          />
           <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMax slice" className="absolute inset-x-0 bottom-0 h-[85%] w-full text-accent/35" aria-hidden>
             <g fill="none" stroke="currentColor" strokeWidth="1.5">
               <path d="M20 300V150a60 60 0 0 1 120 0v150" />

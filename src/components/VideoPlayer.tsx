@@ -13,7 +13,10 @@ type Props = {
   watermark: boolean;
   autoPlay?: boolean;
   loop?: boolean;
+  /** Frame shown before playing, and returned to when the video ends (the last frame is often black). */
   initialFrame?: number;
+  /** Big play circle in the middle while paused. Off in the editor, where it would cover the text being typed. */
+  centerPlay?: boolean;
   /** Play/loop only this range of frames (a single clip). */
   inFrame?: number;
   outFrame?: number;
@@ -28,7 +31,21 @@ type Props = {
  * Remotion Player with large, thumb-friendly controls:
  * tap anywhere to play/pause, a 44px mute button and a progress bar you can tap to seek.
  */
-export const VideoPlayer = ({ def, data, watermark, autoPlay, loop, initialFrame, inFrame, outFrame, soundHint, playerRef, style, className }: Props) => {
+export const VideoPlayer = ({
+  def,
+  data,
+  watermark,
+  autoPlay,
+  loop,
+  initialFrame,
+  centerPlay = true,
+  inFrame,
+  outFrame,
+  soundHint,
+  playerRef,
+  style,
+  className,
+}: Props) => {
   const { t } = useI18n();
   const ownRef = useRef<PlayerRef>(null);
   const ref = playerRef ?? ownRef;
@@ -40,17 +57,24 @@ export const VideoPlayer = ({ def, data, watermark, autoPlay, loop, initialFrame
   const [muted, setMuted] = useState(true);
   const [frame, setFrame] = useState(initialFrame ?? 0);
   const [hintDismissed, setHintDismissed] = useState(false);
+  const restFrame = useRef(initialFrame ?? 0);
+  restFrame.current = initialFrame ?? 0;
 
   useEffect(() => {
     const p = ref.current;
     if (!p) return;
     const onPlay = () => setPlaying(true);
     const onPause = () => setPlaying(false);
+    // Templates end on a fade to black: rest on a frame that shows the invitation instead.
+    const onEnded = () => {
+      setPlaying(false);
+      p.seekTo(restFrame.current);
+    };
     const onMute = (e: { detail: { isMuted: boolean } }) => setMuted(e.detail.isMuted);
     const onFrame = (e: { detail: { frame: number } }) => setFrame(e.detail.frame);
     p.addEventListener('play', onPlay);
     p.addEventListener('pause', onPause);
-    p.addEventListener('ended', onPause);
+    p.addEventListener('ended', onEnded);
     p.addEventListener('mutechange', onMute);
     p.addEventListener('frameupdate', onFrame);
     setPlaying(p.isPlaying());
@@ -58,7 +82,7 @@ export const VideoPlayer = ({ def, data, watermark, autoPlay, loop, initialFrame
     return () => {
       p.removeEventListener('play', onPlay);
       p.removeEventListener('pause', onPause);
-      p.removeEventListener('ended', onPause);
+      p.removeEventListener('ended', onEnded);
       p.removeEventListener('mutechange', onMute);
       p.removeEventListener('frameupdate', onFrame);
     };
@@ -104,7 +128,7 @@ export const VideoPlayer = ({ def, data, watermark, autoPlay, loop, initialFrame
         onClick={(e) => ref.current?.toggle(e)}
         aria-label={playing ? t('Pause') : t('Play')}
       >
-        {!playing ? (
+        {!playing && centerPlay ? (
           <span className="grid size-16 place-items-center rounded-full bg-black/45 text-white backdrop-blur-sm">
             <Play className="ml-1 size-8" fill="currentColor" />
           </span>

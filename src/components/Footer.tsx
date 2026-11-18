@@ -2,7 +2,10 @@ import { Link } from 'react-router-dom';
 import { TAGLINE } from '@/config';
 import { useI18n } from '@/lib/i18n';
 import { categoriesWithTemplates, tagsWithTemplates } from '@/templates/registry';
+import { LanguageSwitch } from './LanguageSwitch';
 import { Logo } from './Logo';
+
+const SUPPORT_WHATSAPP = (import.meta.env.VITE_SUPPORT_WHATSAPP as string | undefined)?.replace(/\D/g, '') || null;
 
 /** Links to every occasion and tag page: helps people browse and search engines find each page. */
 export const Footer = () => {
@@ -10,10 +13,12 @@ export const Footer = () => {
   const linkCls = 'inline-flex min-h-9 items-center text-sm text-muted hover:text-primary';
   return (
     <footer className="mt-12 border-t border-border bg-surface pb-safe-24 md:pb-10">
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 pt-10 md:grid-cols-[1.4fr_1fr_1fr_1fr] md:px-6">
+      <div className="grid w-full gap-8 px-4 pt-10 md:grid-cols-[1.4fr_1fr_1fr_1fr] md:px-6 lg:px-10 2xl:px-16">
         <div>
           <Logo tagline={false} />
           <p className="mt-3 max-w-xs text-sm text-muted">{t('Personalised wedding, birthday and festival invitation videos. Preview free, download HD for WhatsApp.')}</p>
+          {/* Phones switch language in the menu; tablets and desktops here (and in the desktop header). */}
+          <LanguageSwitch className="mt-4 w-fit max-md:hidden" />
         </div>
         <nav aria-label={t('Occasions')}>
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-accent-ink">{t('Occasions')}</p>
@@ -59,10 +64,17 @@ export const Footer = () => {
                 {t('My Videos')}
               </Link>
             </li>
+            {SUPPORT_WHATSAPP ? (
+              <li>
+                <a href={`https://wa.me/${SUPPORT_WHATSAPP}`} target="_blank" rel="noreferrer" className={linkCls}>
+                  {t('Help on WhatsApp')}
+                </a>
+              </li>
+            ) : null}
           </ul>
         </nav>
       </div>
-      <p className="mx-auto mt-8 max-w-6xl px-4 text-xs text-muted md:px-6">
+      <p className="mt-8 w-full px-4 text-xs text-muted md:px-6 lg:px-10 2xl:px-16">
         © {new Date().getFullYear()} invitationvideos.com · {t(TAGLINE)}
       </p>
     </footer>

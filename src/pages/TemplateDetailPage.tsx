@@ -53,8 +53,9 @@ export const TemplateDetailPage = () => {
         </div>
       </div>
 
-      <div className="md:grid md:grid-cols-[minmax(0,420px)_1fr] md:gap-10 md:px-6 md:pt-8">
-        <div className="flex justify-center bg-ink md:overflow-hidden md:rounded-card">
+      <div className="md:grid md:grid-cols-[minmax(0,380px)_1fr] md:gap-10 md:px-6 md:pt-8 xl:grid-cols-[minmax(0,440px)_1fr] xl:gap-14">
+        {/* self-start: don't stretch to the text column's height (that letterboxed the video in a tall dark box). */}
+        <div className="flex justify-center bg-ink md:sticky md:top-24 md:w-fit md:self-start md:overflow-hidden md:rounded-card">
           <VideoPlayer
             def={def}
             data={data}
@@ -63,7 +64,8 @@ export const TemplateDetailPage = () => {
             loop
             soundHint
             style={{ aspectRatio: '9 / 16', height: '62dvh', maxWidth: '100%' }}
-            className="md:!h-auto md:w-full"
+            // Desktop: as tall as fits under the header (max the column width at 9:16); width follows the height.
+            className="md:!h-[min(calc(100dvh-8rem),675px)] md:!w-auto xl:!h-[min(calc(100dvh-8rem),782px)]"
           />
         </div>
 
@@ -119,7 +121,7 @@ export const TemplateDetailPage = () => {
           {similar.length ? (
             <section className="mt-8">
               <SectionHeader title={t('Similar templates')} href={`/invitations/${def.category}`} />
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                 {similar.map((tpl, i) => (
                   <TemplateCard key={tpl.slug} def={tpl} order={i} />
                 ))}

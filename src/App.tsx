@@ -19,10 +19,19 @@ import { TemplatesPage } from '@/pages/TemplatesPage';
 /** Route metadata read by AppShell. */
 export type RouteHandle = { detailScreen?: boolean };
 
-/** Every page starts at the top; Back restores the previous position. */
+/**
+ * Every page starts at the top; Back and reload restore the previous position.
+ * React Router gives every first page load the key "default", so a link opened in an existing tab
+ * (e.g. from WhatsApp) would reuse the last page's position. Fresh loads get their own key instead.
+ */
+const navType = typeof performance !== 'undefined' ? (performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined)?.type : undefined;
+const freshLoadKey = `fresh-${Date.now()}`;
+const scrollKey = (location: { key: string; pathname: string }) =>
+  location.key !== 'default' ? location.key : navType === 'reload' || navType === 'back_forward' ? location.pathname : freshLoadKey;
+
 const Root = () => (
   <>
-    <ScrollRestoration />
+    <ScrollRestoration getKey={scrollKey} />
     <Outlet />
     <InstallPrompt />
   </>

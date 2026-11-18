@@ -101,7 +101,7 @@ export const MyVideosPage = () => {
           />
         </div>
       ) : (
-        <ul className="mt-4 space-y-2 px-4 md:px-0">
+        <ul className="mt-4 space-y-2 px-4 md:px-0 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0 2xl:grid-cols-3">
           {visible.map((d) => (
             <VideoRow key={d.id} draft={d} canDelete={d.status === 'draft' || !signedIn} onDelete={() => setConfirming(d)} />
           ))}

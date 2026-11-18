@@ -48,6 +48,8 @@ export const TemplateCard = ({ def, order = 0 }: { def: TemplateDefinition; orde
               autoPlay
               loop
               initiallyMuted
+              // Start where the still thumbnail was, not on the intro's black first frames.
+              initialFrame={Math.min(frame, duration - 1)}
               acknowledgeRemotionLicense
               style={{ width: '100%', height: '100%', pointerEvents: 'none' }}
             />

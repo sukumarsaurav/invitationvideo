@@ -38,7 +38,7 @@ export const TagPage = () => {
       <p className="mt-2 max-w-2xl text-[15px] text-muted">{t(tag.blurb)}</p>
       <p className="mt-1 text-sm text-muted">{t('{n} designs', { n: list.length })}</p>
 
-      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
         {list.map((tpl, i) => (
           <TemplateCard key={tpl.slug} def={tpl} order={i} />
         ))}

@@ -28,8 +28,8 @@ export const AnnouncementBar = () => {
   );
 
   return (
-    <div className="safe-top relative bg-primary text-[13px] text-white/95">
-      <div className="mx-auto flex h-9 max-w-6xl items-center justify-center px-10 font-display tracking-wide">
+    <div className="relative bg-primary text-[13px] text-white/95">
+      <div className="flex h-9 w-full items-center justify-center px-10 font-display tracking-wide">
         {announcement.link ? (
           <Link to={announcement.link} className="min-w-0 hover:underline">
             {body}

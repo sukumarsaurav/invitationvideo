@@ -9,7 +9,8 @@ export const HelpPage = () => {
   const { t } = useI18n();
   useSeo(helpMeta(FAQ));
   return (
-    <div className="px-4 pt-6 md:px-6 md:pt-10">
+    // Long-form text: keep lines readable on wide screens.
+    <div className="max-w-3xl px-4 pt-6 md:px-6 md:pt-10">
       <h1 className="font-display text-2xl font-semibold">{t('How it works')}</h1>
       <ol className="mt-4 space-y-3">
         {[

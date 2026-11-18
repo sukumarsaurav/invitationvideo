@@ -40,7 +40,7 @@ export const HomePage = () => {
 
       <section className="mt-10 px-4 md:px-6">
         <SectionHeader title={t('Browse by occasion')} />
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
           {occasions.map((c) => {
             const sample = TEMPLATES.find((tpl) => tpl.category === c.slug);
             return (
@@ -62,7 +62,7 @@ export const HomePage = () => {
 
       <section className="mt-10 px-4 md:px-6">
         <SectionHeader title={t('Popular templates')} eyebrow={t('Chosen most often')} href="/templates" />
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
           {popular.map((tpl, i) => (
             <TemplateCard key={tpl.slug} def={tpl} order={trending.length + i} />
           ))}

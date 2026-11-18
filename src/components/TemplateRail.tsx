@@ -26,7 +26,7 @@ export const SectionHeader = ({ title, eyebrow, href, className }: { title: stri
 
 /** Horizontal, swipeable row of templates on phones; a grid from tablet up. */
 export const TemplateRail = ({ templates, startOrder = 0 }: { templates: TemplateDefinition[]; startOrder?: number }) => (
-  <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 lg:grid-cols-5">
+  <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 sm:mx-0 sm:grid sm:grid-cols-3 sm:overflow-visible sm:px-0 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7">
     {templates.map((tpl, i) => (
       <div key={tpl.slug} className="w-[44%] shrink-0 snap-start sm:w-auto">
         <TemplateCard def={tpl} order={startOrder + i} />

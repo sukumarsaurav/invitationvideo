@@ -85,6 +85,21 @@ const Editor = ({ def, draftId: initialDraftId, initial }: { def: TemplateDefini
   const [visited, setVisited] = useState<Set<number>>(() => new Set([0]));
   const [retry, setRetry] = useState(0);
 
+  // Keep the current step's chip in view on narrow screens (e.g. "Finish" sits off the right edge).
+  // Scrolls the strip sideways only, never the page.
+  const stripRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const strip = stripRef.current;
+    const chip = strip?.querySelector<HTMLElement>('[aria-current="step"]');
+    if (!strip || !chip) return;
+    const s = strip.getBoundingClientRect();
+    const c = chip.getBoundingClientRect();
+    const gap = 12;
+    const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+    if (c.left < s.left + gap) strip.scrollBy({ left: c.left - s.left - gap, behavior });
+    else if (c.right > s.right - gap) strip.scrollBy({ left: c.right - s.right + gap, behavior });
+  }, [step]);
+
   // Steps: 0 = your details, 1..n = clips, n+1 = finish.
   const clips = def.schema.clips;
   const finalStep = clips.length + 1;
@@ -269,7 +284,7 @@ const Editor = ({ def, draftId: initialDraftId, initial }: { def: TemplateDefini
   return (
     <div className="flex min-h-dvh flex-col bg-background md:h-dvh md:overflow-hidden">
       <header className="safe-top sticky top-0 z-20 border-b border-border bg-surface/95 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-2 md:px-6">
+        <div className="flex h-14 w-full items-center gap-2 px-2 md:px-6 lg:px-10 2xl:px-16">
           <button onClick={back} className="grid size-11 place-items-center rounded-full" aria-label={t('Back')}>
             <ArrowLeft className="size-5" />
           </button>
@@ -289,18 +304,20 @@ const Editor = ({ def, draftId: initialDraftId, initial }: { def: TemplateDefini
         ) : null}
       </header>
 
-      <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col md:min-h-0 md:flex-row md:gap-8 md:px-6 md:py-6">
-        <div className="sticky top-14 z-10 flex justify-center bg-ink md:static md:w-[380px] md:shrink-0 md:items-start md:bg-transparent">
+      <div className="flex w-full flex-1 flex-col md:min-h-0 md:flex-row md:justify-center md:gap-8 md:px-6 md:py-6 lg:gap-12 lg:px-10 2xl:px-16">
+        <div className="sticky top-14 z-10 flex justify-center bg-ink md:static md:shrink-0 md:items-start md:bg-transparent">
           <VideoPlayer
             def={def}
             data={data}
             watermark
             playerRef={playerRef}
+            centerPlay={false}
             loop={range !== null}
             inFrame={range?.inFrame}
             outFrame={range?.outFrame}
             initialFrame={holdFrameOf(def, data, clipForStep(0) ?? clips[0].id) ?? 0}
-            className="md:!h-[calc(100dvh-140px)] md:overflow-hidden md:rounded-card"
+            // Desktop: fill the height under the header; width follows at 9:16 (was a fixed 380px column, which letterboxed the video).
+            className="md:!h-[min(calc(100dvh-140px),720px)] md:!w-auto md:overflow-hidden md:rounded-card"
             style={{
               aspectRatio: '9 / 16',
               height: typing ? '22dvh' : '40dvh',
@@ -310,9 +327,10 @@ const Editor = ({ def, draftId: initialDraftId, initial }: { def: TemplateDefini
           />
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col md:min-h-0 md:overflow-y-auto">
+        {/* Form stays at a readable width on wide screens; the preview + form pair is centred. */}
+        <div className="flex min-w-0 flex-1 flex-col md:min-h-0 md:max-w-3xl md:overflow-y-auto">
           {/* Step strip */}
-          <div className="no-scrollbar flex gap-2 overflow-x-auto border-b border-border bg-surface px-3 py-2 md:rounded-card md:border">
+          <div ref={stripRef} className="no-scrollbar flex gap-2 overflow-x-auto border-b border-border bg-surface px-3 py-2 md:rounded-card md:border">
             <StripButton active={isDetails} onClick={() => goTo(0)} label={t('Your details')} status={stepStatus(0)}>
               <UserRound className="size-4" /> <span className="text-sm">{t('Details')}</span>
             </StripButton>

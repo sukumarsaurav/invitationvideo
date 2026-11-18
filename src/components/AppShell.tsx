@@ -8,6 +8,7 @@ import { AnnouncementBar } from './AnnouncementBar';
 import { AppDrawer } from './AppDrawer';
 import { BottomTabBar } from './BottomTabBar';
 import { Footer } from './Footer';
+import { LanguageSwitch } from './LanguageSwitch';
 import { Logo } from './Logo';
 import { NAV_ITEMS } from './nav';
 
@@ -21,13 +22,21 @@ export const AppShell = () => {
   // Detail screens draw their own back bar on phones and hide the tabs.
   const detail = useMatches().some((m) => (m.handle as RouteHandle | undefined)?.detailScreen);
 
+  // iPhone notch / status bar (installed app, viewport-fit=cover): the page starts below it, a maroon
+  // strip stays behind it, and the sticky header sticks just under it. Phone detail screens draw their own bar.
   return (
-    <div className="flex min-h-dvh flex-col">
+    <div className={cn('flex min-h-dvh flex-col pt-[env(safe-area-inset-top)]', detail && 'max-md:pt-0')}>
+      <div aria-hidden className={cn('fixed inset-x-0 top-0 z-30 h-[env(safe-area-inset-top)] bg-primary', detail && 'max-md:hidden')} />
       <div className={cn(detail && 'max-md:hidden')}>
         <AnnouncementBar />
       </div>
-      <header className={cn('sticky top-0 z-20 border-b border-border bg-background/90 backdrop-blur', detail && 'max-md:hidden')}>
-        <div className="mx-auto flex h-16 max-w-6xl items-center gap-2 pl-4 pr-2 md:gap-6 md:px-6">
+      <header
+        className={cn(
+          'sticky top-[env(safe-area-inset-top)] z-20 border-b border-border bg-background/90 backdrop-blur',
+          detail && 'max-md:hidden',
+        )}
+      >
+        <div className="flex h-16 w-full items-center gap-2 pl-4 pr-2 md:gap-6 md:px-6 lg:px-10 2xl:px-16">
           <Logo />
           <nav aria-label={t('Main')} className="ml-auto hidden items-center gap-1 md:flex">
             {NAV_ITEMS.map(({ to, label, end }) => (
@@ -43,18 +52,22 @@ export const AppShell = () => {
               </NavLink>
             ))}
           </nav>
-          <div className="ml-auto flex items-center md:ml-0">
+          <div className="ml-auto flex items-center md:ml-0 md:gap-2">
             <Link to="/templates?search=1" className={iconBtn} aria-label={t('Search templates')}>
               <Search className="size-6" />
             </Link>
-            <button onClick={() => setDrawerOpen(true)} className={iconBtn} aria-label={t('Open menu')}>
+            {/* Desktop: language switch in the header (tablets: footer; phones: menu). */}
+            <LanguageSwitch className="max-lg:hidden" />
+            {/* The menu is for phones and tablets; desktop has the full nav above. */}
+            <button onClick={() => setDrawerOpen(true)} className={cn(iconBtn, 'md:hidden')} aria-label={t('Open menu')}>
               <Menu className="size-7" />
             </button>
           </div>
         </div>
       </header>
 
-      <main key={pathname} className="page-in mx-auto w-full max-w-6xl flex-1">
+      {/* Full width. Pages add px-4 / md:px-6; these extra gutters line content up with the header on big screens. */}
+      <main key={pathname} className="page-in w-full flex-1 lg:px-4 2xl:px-10">
         <Outlet />
       </main>
 

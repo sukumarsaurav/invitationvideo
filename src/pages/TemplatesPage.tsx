@@ -114,7 +114,7 @@ export const TemplatesPage = () => {
             />
           </div>
         ) : (
-          <div className="mt-4 grid grid-cols-2 gap-3 px-4 sm:grid-cols-3 md:px-6 lg:grid-cols-4 lg:px-0 xl:grid-cols-5">
+          <div className="mt-4 grid grid-cols-2 gap-3 px-4 sm:grid-cols-3 md:px-6 lg:grid-cols-4 lg:px-0 xl:grid-cols-5 2xl:grid-cols-6">
             {list.map((tpl, i) => (
               <TemplateCard key={tpl.slug} def={tpl} order={i} />
             ))}
