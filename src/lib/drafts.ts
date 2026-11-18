@@ -303,6 +303,19 @@ export const fetchServerStatus = async (id: string): Promise<DraftStatus | null>
   return (data as { status: DraftStatus }).status;
 };
 
+/**
+ * Pays for a signed-in video with the test button: the server records a test order at the
+ * template's price and marks the video paid (exactly what the Razorpay webhook will do).
+ * Throws with a customer-readable message on failure.
+ */
+export const payTest = async (id: string): Promise<void> => {
+  if (!state.userId || !supabase) throw new Error('Sign in to pay.');
+  const { error } = await supabase.rpc('pay_test', { p_video_id: id });
+  if (error) throw new Error(error.message);
+  const draft = state.drafts.find((d) => d.id === id);
+  if (draft) upsertInState({ ...draft, status: 'paid' });
+};
+
 export type SharedVideo ={ templateSlug: string; data: VideoData; updatedAt: string };
 
 /** Reads a shared video by its link token. Works signed out. */

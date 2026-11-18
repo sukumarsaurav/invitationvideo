@@ -4,6 +4,7 @@
  * by the app at runtime (useSeo) and by the build-time pre-renderer (scripts/prerender.ts).
  */
 import { CATEGORIES, getCategory, getTag, SITE_URL, TAGS } from '../templates/taxonomy.ts';
+import { showPrices } from './pricing.ts';
 import type { TemplateMeta } from '../templates/types';
 
 export type PageMeta = {
@@ -131,7 +132,9 @@ export const templateMeta = (def: TemplateMeta | undefined, slug: string | undef
   return {
     // SEO title and description from the admin panel win over the generated ones.
     title: def.seoTitle || `${def.name} – ${category} invitation video`,
-    description: def.seoDescription || `${def.description} Personalise with your names, date and photo, preview free, and download HD for ₹${def.priceInr}.`,
+    description:
+      def.seoDescription ||
+      `${def.description} Personalise with your names, date and photo, preview free, and download HD${showPrices() ? ` for ₹${def.priceInr}` : ' free'}.`,
     path: `/t/${def.slug}`,
     jsonLd: [
       {
@@ -142,7 +145,13 @@ export const templateMeta = (def: TemplateMeta | undefined, slug: string | undef
         category: `${category} invitations`,
         image: `${SITE_URL}/icons/icon-512.png`,
         brand: { '@type': 'Brand', name: SITE_NAME },
-        offers: { '@type': 'Offer', price: def.priceInr, priceCurrency: 'INR', availability: 'https://schema.org/InStock', url: `${SITE_URL}/t/${def.slug}` },
+        offers: {
+          '@type': 'Offer',
+          price: showPrices() ? def.priceInr : 0,
+          priceCurrency: 'INR',
+          availability: 'https://schema.org/InStock',
+          url: `${SITE_URL}/t/${def.slug}`,
+        },
       },
       breadcrumbLd([
         { name: 'Home', path: '/' },

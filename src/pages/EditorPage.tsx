@@ -26,6 +26,7 @@ import { useToast } from '@/components/Toast';
 import { VideoPlayer } from '@/components/VideoPlayer';
 import { useAuth } from '@/lib/auth';
 import { cn, formatInr } from '@/lib/cn';
+import { showPrices } from '@/lib/pricing';
 import { createDraft, createShareLink, saveDraftData, useDraft } from '@/lib/drafts';
 import { tap } from '@/lib/haptics';
 import { useI18n } from '@/lib/i18n';
@@ -822,11 +823,11 @@ const FinalStep = ({
               {sharing ? <Loader2 className="size-4 animate-spin" /> : <Share2 className="size-4" />} {t('Share preview')}
             </Button>
           </div>
-          <p className="mt-2 text-xs text-muted">{t('Send it to family to check before you pay.')}</p>
+          <p className="mt-2 text-xs text-muted">{t(showPrices() ? 'Send it to family to check before you pay.' : 'Send it to family to check before you download.')}</p>
         </li>
         <li className="rounded-card border border-accent/60 bg-surface p-4">
           <p className="font-semibold">
-            2. {t('Download in HD')} · {formatInr(def.priceInr)}
+            2. {t('Download in HD')} · {showPrices() ? formatInr(def.priceInr) : t('Free')}
           </p>
           <p className="text-sm text-muted">{t('No watermark, ready for WhatsApp.')}</p>
           <p className="mt-1 flex items-center gap-1 text-sm text-muted">

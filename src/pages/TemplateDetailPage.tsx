@@ -9,6 +9,7 @@ import { TemplateCard } from '@/components/TemplateCard';
 import { SectionHeader } from '@/components/TemplateRail';
 import { VideoPlayer } from '@/components/VideoPlayer';
 import { formatInr } from '@/lib/cn';
+import { showPrices } from '@/lib/pricing';
 import { tap } from '@/lib/haptics';
 import { useI18n } from '@/lib/i18n';
 import { templateMeta } from '@/lib/pageMeta';
@@ -136,7 +137,7 @@ export const TemplateDetailPage = () => {
           <div className="fixed inset-x-0 bottom-0 z-20 border-t border-border/70 bg-surface/95 px-4 pt-3 pb-safe-3 shadow-[0_-8px_24px_-12px_rgba(42,26,31,0.25)] backdrop-blur md:static md:mt-8 md:border-0 md:bg-transparent md:px-0 md:pt-0 md:pb-0 md:shadow-none">
             <div className="mx-auto flex max-w-md items-center gap-4 md:mx-0 md:max-w-none">
               <div className="shrink-0 md:hidden">
-                <p className="text-xl font-bold leading-tight">{formatInr(def.priceInr)}</p>
+                <p className="text-xl font-bold leading-tight">{showPrices() ? formatInr(def.priceInr) : t('Free')}</p>
                 <p className="text-xs text-muted">{t('for the HD video')}</p>
               </div>
               <Button onClick={personalise} className="min-h-12 flex-1 md:flex-none md:px-10">
@@ -144,7 +145,13 @@ export const TemplateDetailPage = () => {
               </Button>
             </div>
             <p className="mt-2 hidden text-sm text-muted md:block">
-              {t('Preview is free. HD download without watermark:')} <strong className="text-ink">{formatInr(def.priceInr)}</strong>
+              {showPrices() ? (
+                <>
+                  {t('Preview is free. HD download without watermark:')} <strong className="text-ink">{formatInr(def.priceInr)}</strong>
+                </>
+              ) : (
+                t('Preview and HD download without watermark are free.')
+              )}
             </p>
           </div>
         </div>

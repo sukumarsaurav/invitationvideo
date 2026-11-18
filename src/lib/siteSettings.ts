@@ -12,6 +12,8 @@ export type SiteSettings = {
   support_whatsapp: { number: string };
   payments_enabled: { enabled: boolean; message: string };
   maintenance: { enabled: boolean; text: string };
+  /** Download asks for payment and a test "Pay" button completes it (until Razorpay is integrated). */
+  test_payments: { enabled: boolean };
 };
 
 const ENV_SUPPORT = (import.meta.env.VITE_SUPPORT_WHATSAPP as string | undefined) ?? '';
@@ -21,6 +23,7 @@ export const DEFAULT_SETTINGS: SiteSettings = {
   support_whatsapp: { number: ENV_SUPPORT },
   payments_enabled: { enabled: true, message: '' },
   maintenance: { enabled: false, text: '' },
+  test_payments: { enabled: false },
 };
 
 const CACHE_KEY = 'iv.settings.v1';
@@ -51,12 +54,14 @@ export const sanitizeSettings = (rows: Array<{ key: string; value: unknown }>): 
   const w = raw.support_whatsapp ?? {};
   const p = raw.payments_enabled ?? {};
   const m = raw.maintenance ?? {};
+  const tp = raw.test_payments ?? {};
   const digits = str(w.number, d.support_whatsapp.number).replace(/\D/g, '');
   return {
     announcement: { enabled: bool(a.enabled, d.announcement.enabled), text: str(a.text, d.announcement.text), link },
     support_whatsapp: { number: digits },
     payments_enabled: { enabled: bool(p.enabled, d.payments_enabled.enabled), message: str(p.message, d.payments_enabled.message) },
     maintenance: { enabled: bool(m.enabled, d.maintenance.enabled), text: str(m.text, d.maintenance.text) },
+    test_payments: { enabled: bool(tp.enabled, d.test_payments.enabled) },
   };
 };
 

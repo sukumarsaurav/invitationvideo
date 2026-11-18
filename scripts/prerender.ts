@@ -13,7 +13,8 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { FAQ } from '../src/content/faq.ts';
+import { getFaq } from '../src/content/faq.ts';
+import { showPrices } from '../src/lib/pricing.ts';
 import {
   byPopularity,
   categoryLabel,
@@ -44,6 +45,8 @@ if (!shell.includes('<div id="root"></div>')) throw new Error('dist/index.html h
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const inr = (n: number) => `₹${n.toLocaleString('en-IN')}`;
+/** "₹499 for HD", or "free HD" while downloads are free (src/lib/pricing.ts). */
+const hdPrice = (n: number) => (showPrices() ? `${inr(n)} for HD` : 'free HD');
 
 const head = (m: PageMeta) => {
   const title = `${m.title} | ${SITE_NAME}`;
@@ -81,7 +84,7 @@ const templateList = (list: TemplateMeta[]) =>
   `<ul class="mt-3 space-y-2">${list
     .map(
       (t) =>
-        `<li>${link(`/t/${t.slug}`, t.name, 'font-semibold text-primary underline')} <span class="text-sm text-muted">· ${esc(categoryLabel(t.category))} invitation video · ${inr(t.priceInr)} for HD</span></li>`,
+        `<li>${link(`/t/${t.slug}`, t.name, 'font-semibold text-primary underline')} <span class="text-sm text-muted">· ${esc(categoryLabel(t.category))} invitation video · ${hdPrice(t.priceInr)}</span></li>`,
     )
     .join('')}</ul>`;
 
@@ -123,7 +126,7 @@ const pages: Out[] = [];
 
 // Home
 {
-  const faq = FAQ.slice(0, 4);
+  const faq = getFaq().slice(0, 4);
   pages.push({
     path: '/',
     meta: homeMeta(TEMPLATES, faq),
@@ -185,7 +188,7 @@ for (const t of TEMPLATES) {
       <nav class="text-xs text-muted">${link('/', 'Home', '')} › ${link(`/invitations/${t.category}`, `${categoryLabel(t.category)} invitations`, '')} › ${esc(t.name)}</nav>
       <h1 class="mt-1 font-display text-3xl font-semibold">${esc(t.name)}</h1>
       <p class="mt-2 text-muted">${esc(t.description)}</p>
-      <p class="mt-2 font-semibold">Preview free · ${inr(t.priceInr)} for the HD video</p>
+      <p class="mt-2 font-semibold">Preview free · ${showPrices() ? `${inr(t.priceInr)} for the HD video` : 'HD video free'}</p>
       ${section('What you can change', `<p class="mt-2 text-muted">${esc(fields.join(' · '))}${t.schema.details.some((f) => f.type === 'photo') ? ' · your photo' : ''}</p>`)}
       ${section('Clips in this video', `<ol class="mt-2 list-decimal pl-5">${t.schema.clips.map((c) => `<li>${esc(c.name)}${c.optional ? ' (optional)' : ''}</li>`).join('')}</ol>`)}
       ${tagLinks(t.tags)}
@@ -196,7 +199,7 @@ for (const t of TEMPLATES) {
 // Help
 pages.push({
   path: '/help',
-  meta: helpMeta(FAQ),
+  meta: helpMeta(getFaq()),
   body: layout(`
     <h1 class="font-display text-3xl font-semibold">How it works</h1>
     <ol class="mt-3 list-decimal pl-5">
@@ -205,7 +208,7 @@ pages.push({
       <li>Preview and share: watch it free and send the preview link to family.</li>
       <li>Download in HD: pay once and send the video on WhatsApp.</li>
     </ol>
-    ${section('Questions', faqHtml(FAQ))}`),
+    ${section('Questions', faqHtml(getFaq()))}`),
 });
 
 // ---------------------------------------------------------------------------

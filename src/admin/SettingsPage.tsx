@@ -221,6 +221,15 @@ export const SettingsPage = () => {
             </>
           )}
         </SettingCard>
+        <SettingCard
+          title="Test payments"
+          description="Until Razorpay is integrated: Download asks for payment and a test “Pay” button completes it. Each test payment records a paid order (source “test”), so the dashboard and customer pages fill in. Turn this off before launch."
+          settingKey="test_payments"
+          row={rows.test_payments}
+          {...common}
+        >
+          {(v, set) => <Toggle checked={v.enabled} onChange={(enabled) => set({ enabled })} label="Test payments on" />}
+        </SettingCard>
       </div>
     </>
   );

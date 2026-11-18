@@ -22,6 +22,8 @@ const readEnvFile = (name: string): Record<string, string> => {
 };
 
 const fileEnv = readEnvFile('.env.production');
+// The pricing switch (src/lib/pricing.ts) reads process.env during pre-rendering; a local build gets it from .env.production.
+if (!process.env.VITE_FREE_HD && fileEnv.VITE_FREE_HD) process.env.VITE_FREE_HD = fileEnv.VITE_FREE_HD;
 const url = process.env.VITE_SUPABASE_URL || fileEnv.VITE_SUPABASE_URL;
 const key = process.env.VITE_SUPABASE_ANON_KEY || fileEnv.VITE_SUPABASE_ANON_KEY;
 

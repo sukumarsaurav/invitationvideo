@@ -1,12 +1,14 @@
 import { ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { FAQ } from '@/content/faq';
+import { getFaq } from '@/content/faq';
+import { showPrices } from '@/lib/pricing';
 import { useI18n } from '@/lib/i18n';
 import { helpMeta } from '@/lib/pageMeta';
 import { useSeo } from '@/lib/seo';
 
 export const HelpPage = () => {
   const { t } = useI18n();
+  const FAQ = getFaq();
   useSeo(helpMeta(FAQ));
   return (
     // Long-form text: keep lines readable on wide screens.
@@ -17,7 +19,7 @@ export const HelpPage = () => {
           ['Pick a design', 'Browse templates and tap one you like.'],
           ['Add your details', 'Names, date, venue and a photo. You see the video change as you type.'],
           ['Preview and share', 'Watch it free and send the preview link to family.'],
-          ['Download in HD', 'Pay once and send the video on WhatsApp.'],
+          ['Download in HD', showPrices() ? 'Pay once and send the video on WhatsApp.' : 'Download it free and send the video on WhatsApp.'],
         ].map(([title, body], i) => (
           <li key={title} className="flex gap-3 rounded-card border border-border bg-surface p-4">
             <span className="grid size-8 shrink-0 place-items-center rounded-full bg-primary text-sm font-bold text-white">{i + 1}</span>

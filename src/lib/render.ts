@@ -2,17 +2,17 @@ import { getDurationInFrames } from '@/templates/data';
 import { waitForTemplateFonts } from '@/templates/shared/fonts';
 import { bindTemplate } from '@/templates/TemplateVideo';
 import type { TemplateDefinition, VideoData } from '@/templates/types';
+import { isFreeHd } from './pricing';
 
 export type RenderQuality = '1080p' | '720p';
 
 /**
- * HD downloads without payment: always in development, and in production only when
- * VITE_FREE_HD=true is set on purpose (e.g. a launch promotion). Otherwise the server's
- * payment status decides (see RenderPage).
+ * HD downloads without payment, only when VITE_FREE_HD=true is set on purpose (a promotion or a
+ * demo). Otherwise the server's payment status decides (see RenderPage). See lib/pricing.
  * Note: rendering happens in the customer's browser, so this check stops ordinary customers,
  * not someone editing the app's JavaScript.
  */
-export const FREE_HD = import.meta.env.DEV || import.meta.env.VITE_FREE_HD === 'true';
+export const FREE_HD = isFreeHd();
 
 export const scaleFor = (q: RenderQuality) => (q === '1080p' ? 1 : 720 / 1080);
 

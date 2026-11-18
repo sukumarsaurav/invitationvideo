@@ -5,7 +5,7 @@ import { Hero } from '@/components/Hero';
 import { TemplateCard } from '@/components/TemplateCard';
 import { TagChips } from '@/components/TagChips';
 import { SectionHeader, TemplateRail } from '@/components/TemplateRail';
-import { FAQ } from '@/content/faq';
+import { getFaq } from '@/content/faq';
 import { useI18n } from '@/lib/i18n';
 import { homeMeta } from '@/lib/pageMeta';
 import { useSeo } from '@/lib/seo';
@@ -24,7 +24,7 @@ export const HomePage = () => {
   const popular = popularTemplates();
   const occasions = categoriesWithTemplates();
   const tags = tagsWithTemplates();
-  const faq = FAQ.slice(0, 4);
+  const faq = getFaq().slice(0, 4);
 
   useSeo(homeMeta(TEMPLATES, faq));
 

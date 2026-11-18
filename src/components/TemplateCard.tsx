@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useIsActiveCard, useNearScreen } from '@/lib/activeCard';
 import { formatInr } from '@/lib/cn';
+import { showPrices } from '@/lib/pricing';
 import { useI18n } from '@/lib/i18n';
 import { getDurationInFrames, makeExampleData } from '@/templates/data';
 import { categoryName } from '@/templates/registry';
@@ -74,7 +75,7 @@ export const TemplateCard = ({ def, order = 0 }: { def: TemplateDefinition; orde
         <p className="line-clamp-2 text-sm font-semibold leading-snug">{def.name}</p>
         <p className="mt-0.5 flex items-center justify-between text-xs text-muted">
           <span>{t(categoryName(def.category))}</span>
-          <span className="font-semibold text-accent-ink">{formatInr(def.priceInr)}</span>
+          {showPrices() ? <span className="font-semibold text-accent-ink">{formatInr(def.priceInr)}</span> : null}
         </p>
       </div>
     </Link>

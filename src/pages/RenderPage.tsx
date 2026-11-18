@@ -1,12 +1,12 @@
-import { AlertTriangle, ArrowLeft, CheckCircle2, ChevronDown, Clock, Download, Loader2, Lock, Send } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, ChevronDown, Clock, Download, Loader2, Lock, Send, ShieldCheck } from 'lucide-react';
 import { useSeo } from '@/lib/seo';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Button } from '@/components/Button';
 import { INSTALL_MOMENT } from '@/components/InstallPrompt';
 import { useToast } from '@/components/Toast';
-import { cn } from '@/lib/cn';
-import { fetchServerStatus, markRendered, useDraft } from '@/lib/drafts';
+import { cn, formatInr } from '@/lib/cn';
+import { fetchServerStatus, markRendered, payTest, useDraft } from '@/lib/drafts';
 import { tap } from '@/lib/haptics';
 import { useI18n } from '@/lib/i18n';
 import {
@@ -19,6 +19,7 @@ import {
   type RenderCheck,
   type RenderQuality,
 } from '@/lib/render';
+import { useSiteSettings } from '@/lib/siteSettings';
 import { useWakeLock } from '@/lib/wakeLock';
 import { getDurationInFrames, normaliseData, videoTitle } from '@/templates/data';
 import { getTemplate } from '@/templates/registry';
@@ -55,6 +56,11 @@ export const RenderPage = () => {
   const [now, setNow] = useState(() => Date.now());
   const abortRef = useRef<AbortController | null>(null);
   const wake = useWakeLock(phase.kind === 'rendering');
+  const settings = useSiteSettings();
+  const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
+  // Set by a successful payment: the video starts as soon as the device check is done.
+  const [autoStart, setAutoStart] = useState(false);
   useSeo({ title: 'Download HD video', description: '', path: '/render', noindex: true });
 
   // Who may make the HD file: everyone when FREE_HD, otherwise only videos the server marks as paid.
@@ -92,6 +98,14 @@ export const RenderPage = () => {
     return () => window.removeEventListener('beforeunload', onBeforeUnload);
   }, [phase.kind]);
 
+  // start is defined after the early returns below; the effect calls the latest one through a ref.
+  const startRef = useRef<(() => Promise<void>) | null>(null);
+  useEffect(() => {
+    if (!autoStart || access !== 'allowed' || !check?.ok || phase.kind !== 'idle' || !startRef.current) return;
+    setAutoStart(false);
+    void startRef.current();
+  }, [autoStart, access, check, phase.kind]);
+
   if (loading) return <LoadingScreen />;
   if (!draft || !def || !data) return <NotFoundPage />;
 
@@ -128,6 +142,25 @@ export const RenderPage = () => {
     }
   };
 
+  startRef.current = start;
+
+  // Test payment (until Razorpay): the server records the order and marks the video paid.
+  const pay = async () => {
+    setPaying(true);
+    setPayError(null);
+    tap(15);
+    try {
+      await payTest(draft.id);
+      setAccess('allowed');
+      setAutoStart(true);
+      toast({ message: t('Payment received. Making your HD video…') });
+    } catch (e) {
+      setPayError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setPaying(false);
+    }
+  };
+
   const shareFile = async (file: File) => {
     try {
       await navigator.share({ files: [file], title, text: t('Our invitation: {title}', { title }) });
@@ -154,9 +187,9 @@ export const RenderPage = () => {
       </header>
 
       <div className="mx-auto max-w-xl space-y-4 px-4 py-5">
-        {import.meta.env.DEV ? (
+        {FREE_HD ? (
           <div className="rounded-card border border-accent/60 bg-accent/10 p-3 text-sm">
-            <strong>{t('Development mode:')}</strong> {t('payment is skipped. Razorpay is added in Phase 3.')}
+            <strong>{t('Testing mode:')}</strong> {t('HD downloads are free for now.')}
           </div>
         ) : null}
 
@@ -234,13 +267,47 @@ export const RenderPage = () => {
               </div>
             ) : null}
 
-            {access === 'locked' ? (
+            {access === 'locked' && settings.payments_enabled.enabled && settings.test_payments.enabled ? (
+              <div className="mt-4 rounded-card border border-accent/60 p-4">
+                <p className="font-semibold">{t('Pay to download')}</p>
+                <dl className="mt-3 space-y-2 text-sm">
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-muted">{t(def.name)}</dt>
+                    <dd className="tabular-nums">{formatInr(def.priceInr)}</dd>
+                  </div>
+                  <div className="flex justify-between gap-3">
+                    <dt className="text-muted">{t('HD video, no watermark')}</dt>
+                    <dd className="text-success">{t('Included')}</dd>
+                  </div>
+                  <div className="flex justify-between gap-3 border-t border-border pt-2 font-semibold">
+                    <dt>{t('Total')}</dt>
+                    <dd className="tabular-nums">{formatInr(def.priceInr)}</dd>
+                  </div>
+                </dl>
+                <Button className="mt-4 w-full" onClick={pay} disabled={paying || !check?.ok}>
+                  {paying ? <Loader2 className="size-4 animate-spin" /> : <Lock className="size-4" />} {t('Pay {price}', { price: formatInr(def.priceInr) })}
+                </Button>
+                <p className="mt-2 flex items-center justify-center gap-1 text-xs text-muted">
+                  <ShieldCheck className="size-3.5" /> {t('Test payment: no money is charged.')}
+                </p>
+                <p className="mt-1 text-center text-xs text-muted">{t('Pay once. Download again any time from My Videos.')}</p>
+                {payError ? (
+                  <p role="alert" className="mt-2 text-sm text-error">
+                    {payError}
+                  </p>
+                ) : null}
+              </div>
+            ) : access === 'locked' ? (
               <>
                 <div className="mt-4 rounded-button bg-accent/15 p-3 text-sm">
                   <p className="flex items-center gap-2 font-semibold">
-                    <Lock className="size-4" /> {t('HD download opens soon')}
+                    <Lock className="size-4" /> {settings.payments_enabled.enabled ? t('HD download opens soon') : t('Payments are paused')}
                   </p>
-                  <p className="mt-1">{t('Online payment is being set up. Until then, share the free preview with family from the editor.')}</p>
+                  <p className="mt-1">
+                    {settings.payments_enabled.enabled
+                      ? t('Online payment is being set up. Until then, share the free preview with family from the editor.')
+                      : settings.payments_enabled.message || t('Please try again in a few minutes. Your video is saved.')}
+                  </p>
                 </div>
                 <Link
                   to={`/editor/${draft.id}`}

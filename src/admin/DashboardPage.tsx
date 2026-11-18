@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/cn';
+import { useSiteSettings } from '@/lib/siteSettings';
 import { supabase } from '@/lib/supabase';
 import { Card, ErrorNote, formatPaise, Loading, PageHeader } from './ui';
 
@@ -46,6 +47,7 @@ export const DashboardPage = () => {
   const [days, setDays] = useState<number>(30);
   const [data, setData] = useState<Dashboard | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const testPayments = useSiteSettings().test_payments.enabled;
 
   useEffect(() => {
     let active = true;
@@ -105,7 +107,12 @@ export const DashboardPage = () => {
             </div>
           </div>
 
-          {c.paid_orders === 0 && p.paid_orders === 0 ? (
+          {testPayments ? (
+            <p className="rounded-button bg-accent/15 p-3 text-sm">
+              Test payments are on (Settings): revenue and orders include test payments, which charge no money.
+            </p>
+          ) : null}
+          {c.paid_orders === 0 && p.paid_orders === 0 && !testPayments ? (
             <p className="rounded-button bg-accent/10 p-3 text-sm">Revenue, orders and conversion fill in once online payment launches (Phase 2 of the plan).</p>
           ) : null}
 
