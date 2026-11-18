@@ -9,6 +9,7 @@ import { getFaq } from '@/content/faq';
 import { useI18n } from '@/lib/i18n';
 import { homeMeta } from '@/lib/pageMeta';
 import { useSeo } from '@/lib/seo';
+import { inCategory } from '@/templates/taxonomy';
 import { categoriesWithTemplates, popularTemplates, tagsWithTemplates, TEMPLATES, trendingTemplates } from '@/templates/registry';
 
 const STEPS = [
@@ -44,7 +45,7 @@ export const HomePage = () => {
         <SectionHeader title={t('Browse by occasion')} />
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
           {occasions.map((c) => {
-            const sample = TEMPLATES.find((tpl) => tpl.category === c.slug);
+            const sample = TEMPLATES.find((tpl) => inCategory(tpl.category, c.slug));
             return (
               <li key={c.slug}>
                 <Link
@@ -54,7 +55,7 @@ export const HomePage = () => {
                 >
                   <span className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" aria-hidden />
                   <span className="relative font-display text-lg font-semibold leading-tight">{t(c.name)}</span>
-                  <span className="relative text-xs text-white/85">{t('{n} designs', { n: c.count })}</span>
+                  <span className="relative text-xs text-white/85">{t(c.count === 1 ? '{n} design' : '{n} designs', { n: c.count })}</span>
                 </Link>
               </li>
             );

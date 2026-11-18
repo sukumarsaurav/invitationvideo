@@ -3,7 +3,7 @@
  * Pure data (no React, no browser APIs, relative `.ts` imports) so the same output is used
  * by the app at runtime (useSeo) and by the build-time pre-renderer (scripts/prerender.ts).
  */
-import { CATEGORIES, getCategory, getTag, SITE_URL, TAGS } from '../templates/taxonomy.ts';
+import { CATEGORIES, getCategory, getTag, inCategory, SITE_URL, TAGS } from '../templates/taxonomy.ts';
 import { showPrices } from './pricing.ts';
 import type { TemplateMeta } from '../templates/types';
 
@@ -86,7 +86,7 @@ export const homeMeta = (templates: TemplateMeta[], faq: Array<[string, string]>
 /** /templates (all) or /invitations/<category>. */
 export const listingMeta = (templates: TemplateMeta[], categorySlug: string | null): PageMeta => {
   const category = getCategory(categorySlug ?? undefined);
-  const list = category ? templates.filter((t) => t.category === category.slug) : templates;
+  const list = category ? templates.filter((t) => inCategory(t.category, category.slug)) : templates;
   return {
     title: category ? `${category.name} invitation video templates` : 'All invitation video templates',
     description: category
@@ -98,6 +98,9 @@ export const listingMeta = (templates: TemplateMeta[], categorySlug: string | nu
       breadcrumbLd([
         { name: 'Home', path: '/' },
         { name: 'Templates', path: '/templates' },
+        ...(category?.parent && getCategory(category.parent)
+          ? [{ name: `${getCategory(category.parent)!.name} invitations`, path: `/invitations/${category.parent}` }]
+          : []),
         ...(category ? [{ name: `${category.name} invitations`, path: `/invitations/${category.slug}` }] : []),
       ]),
       itemListLd(category ? `${category.name} invitations` : 'All templates', list.map(tplItem)),

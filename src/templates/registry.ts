@@ -1,7 +1,7 @@
 import { pastelBirthday } from './pastel-birthday';
 import { royalWedding } from './royal-wedding';
 import { byPopularity, similarTo, usedTags } from '../lib/pageMeta.ts';
-import { CATEGORIES } from './taxonomy';
+import { CATEGORIES, inCategory, MAIN_CATEGORIES } from './taxonomy';
 import type { TemplateDefinition } from './types';
 
 export { CATEGORIES, TAGS, getCategory, getTag, SITE_URL } from './taxonomy';
@@ -27,9 +27,30 @@ export const categoryName = (slug: string): string =>
 import { TAGS } from './taxonomy';
 export const tagName = (slug: string): string => TAGS.find((t) => t.slug === slug)?.name ?? slug;
 
-/** Categories that have at least one template, with counts. Empty ones are hidden until templates exist. */
+/**
+ * Main categories that have at least one template, with counts that include their sub-categories.
+ * Empty ones are hidden until templates exist.
+ */
 export const categoriesWithTemplates = () =>
-  CATEGORIES.map((c) => ({ ...c, count: TEMPLATES.filter((t) => t.category === c.slug).length })).filter((c) => c.count > 0);
+  MAIN_CATEGORIES.map((c) => ({ ...c, count: TEMPLATES.filter((t) => inCategory(t.category, c.slug)).length })).filter((c) => c.count > 0);
+
+/** Templates on a category's page: its own and, for a main category, its sub-categories'. */
+export const templatesIn = (category: string, list: TemplateDefinition[] = TEMPLATES) => list.filter((t) => inCategory(t.category, category));
+
+/** Does the design have a photo slot (in the details or any clip)? */
+export const hasPhotoSlot = (def: TemplateDefinition) =>
+  def.schema.details.some((f) => f.type === 'photo') || def.schema.clips.some((c) => c.fields.some((f) => f.type === 'photo'));
+
+export type SortKey = 'popular' | 'newest' | 'price-asc' | 'price-desc';
+
+/** A sorted copy. Ties keep store order (the admin panel's sort order). */
+export const sortTemplates = (list: TemplateDefinition[], sort: SortKey): TemplateDefinition[] => {
+  const copy = [...list];
+  if (sort === 'popular') return copy.sort((a, b) => (b.popularity ?? 0) - (a.popularity ?? 0));
+  if (sort === 'newest') return copy.sort((a, b) => (b.publishedAt ?? '').localeCompare(a.publishedAt ?? ''));
+  if (sort === 'price-asc') return copy.sort((a, b) => a.priceInr - b.priceInr);
+  return copy.sort((a, b) => b.priceInr - a.priceInr);
+};
 
 /** Tags used by at least one template, most used first. */
 export const tagsWithTemplates = () => usedTags(TEMPLATES);

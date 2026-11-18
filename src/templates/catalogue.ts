@@ -19,10 +19,11 @@ export type CatalogueRow = {
   sort_order: number;
   seo_title: string | null;
   seo_description: string | null;
+  published_at?: string | null;
   categories: { slug: string } | null;
 };
 
-const SELECT = 'slug,name,description,price_inr,tags,is_trending,popularity,sort_order,seo_title,seo_description,categories(slug)';
+const SELECT = 'slug,name,description,price_inr,tags,is_trending,popularity,sort_order,seo_title,seo_description,published_at,categories(slug)';
 
 /**
  * Published templates, read as a signed-out visitor so the store shows exactly what customers see.
@@ -58,6 +59,7 @@ export const applyCatalogue = <T extends TemplateMeta>(all: T[], rows: Catalogue
     t.sortOrder = r.sort_order;
     t.seoTitle = r.seo_title || undefined;
     t.seoDescription = r.seo_description || undefined;
+    t.publishedAt = r.published_at || undefined;
     if (r.categories?.slug) t.category = r.categories.slug;
   }
   // Stable sort: equal sort_order keeps the code order.

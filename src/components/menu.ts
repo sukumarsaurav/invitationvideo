@@ -1,4 +1,5 @@
 import { TEMPLATES } from '@/templates/registry';
+import { inCategory } from '@/templates/taxonomy';
 
 /**
  * The category menu: dropdowns in the desktop header, collapsible groups in the phone drawer.
@@ -50,7 +51,7 @@ export const MENU: MenuGroup[] = [
 
 /** Published templates behind a link; null for links that aren't a listing (e.g. Help). */
 export const linkCount = (link: MenuLink): number | null => {
-  if (link.category) return TEMPLATES.filter((t) => t.category === link.category).length;
+  if (link.category) return TEMPLATES.filter((t) => inCategory(t.category, link.category!)).length;
   if (link.tag) return TEMPLATES.filter((t) => t.tags.includes(link.tag!)).length;
   return link.to === '/templates' ? TEMPLATES.length : null;
 };

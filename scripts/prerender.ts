@@ -29,7 +29,7 @@ import {
   type PageMeta,
 } from '../src/lib/pageMeta.ts';
 import { BUILD_TEMPLATES } from './catalogue-build.ts';
-import { CATEGORIES, getCategory, getTag, SITE_URL } from '../src/templates/taxonomy.ts';
+import { CATEGORIES, getCategory, getTag, inCategory, SITE_URL } from '../src/templates/taxonomy.ts';
 import type { TemplateMeta } from '../src/templates/types';
 
 // Published templates only, with the admin panel's prices and copy.
@@ -97,7 +97,7 @@ const tagLinks = (slugs: string[]) =>
 
 const section = (title: string, inner: string) => `<section class="mt-8"><h2 class="font-display text-xl font-semibold">${esc(title)}</h2>${inner}</section>`;
 
-const occasions = () => CATEGORIES.filter((c) => TEMPLATES.some((t) => t.category === c.slug));
+const occasions = () => CATEGORIES.filter((c) => TEMPLATES.some((t) => inCategory(t.category, c.slug)));
 
 /** Same header and footer links as the app, so every page links to every other public page. */
 const layout = (main: string) => `
@@ -146,7 +146,7 @@ const pages: Out[] = [];
 // All templates + each occasion with templates
 for (const slug of [null, ...occasions().map((c) => c.slug)]) {
   const category = getCategory(slug ?? undefined);
-  const list = category ? TEMPLATES.filter((t) => t.category === category.slug) : TEMPLATES;
+  const list = category ? TEMPLATES.filter((t) => inCategory(t.category, category.slug)) : TEMPLATES;
   const meta = listingMeta(TEMPLATES, slug);
   pages.push({
     path: meta.path,

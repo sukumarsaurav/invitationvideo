@@ -103,4 +103,6 @@ export type TemplateDefinition = {
   /** Search-result title and description set in the admin panel; fall back to name and description. */
   seoTitle?: string;
   seoDescription?: string;
+  /** When the admin panel first published it (ISO date), for "Newest". */
+  publishedAt?: string;
 };

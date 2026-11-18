@@ -3,7 +3,7 @@
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { BUILD_TEMPLATES } from './catalogue-build.ts';
-import { CATEGORIES, SITE_URL, TAGS } from '../src/templates/taxonomy.ts';
+import { CATEGORIES, inCategory, SITE_URL, TAGS } from '../src/templates/taxonomy.ts';
 
 // Published templates only: hidden ones have no page to index.
 const TEMPLATES = BUILD_TEMPLATES;
@@ -16,7 +16,7 @@ const entries: Entry[] = [
   { path: '/templates', priority: 0.9, changefreq: 'daily' },
   { path: '/help', priority: 0.5, changefreq: 'monthly' },
   // Only pages that have templates: empty category/tag pages are not worth indexing.
-  ...CATEGORIES.filter((c) => TEMPLATES.some((t) => t.category === c.slug)).map(
+  ...CATEGORIES.filter((c) => TEMPLATES.some((t) => inCategory(t.category, c.slug))).map(
     (c): Entry => ({ path: `/invitations/${c.slug}`, priority: 0.8, changefreq: 'weekly' }),
   ),
   ...TAGS.filter((tag) => TEMPLATES.some((t) => t.tags.includes(tag.slug))).map(

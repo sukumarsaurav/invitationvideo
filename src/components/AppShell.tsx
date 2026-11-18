@@ -1,4 +1,4 @@
-import { Clapperboard, Menu, Search, UserRound } from 'lucide-react';
+import { Clapperboard, Heart, Menu, Search, UserRound } from 'lucide-react';
 import { useCatalogue } from '@/lib/catalogue';
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useMatches } from 'react-router-dom';
@@ -6,6 +6,7 @@ import type { RouteHandle } from '@/App';
 import { cn } from '@/lib/cn';
 import { useI18n } from '@/lib/i18n';
 import { useAuth } from '@/lib/auth';
+import { useShortlist } from '@/lib/shortlist';
 import { useSiteSettings } from '@/lib/siteSettings';
 import { AnnouncementBar } from './AnnouncementBar';
 import { AppDrawer } from './AppDrawer';
@@ -27,7 +28,9 @@ const iconBtn = 'grid size-11 place-items-center rounded-full text-primary trans
 export const AppShell = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { user } = useAuth();
-  const { pathname } = useLocation();
+  const shortlist = useShortlist();
+  const { pathname, search } = useLocation();
+  const onShortlist = pathname === '/templates' && new URLSearchParams(search).get('shortlist') === '1';
   const { t } = useI18n();
   useCatalogue(); // re-render when the admin-published catalogue arrives
   const { maintenance } = useSiteSettings();
@@ -113,6 +116,17 @@ export const AppShell = () => {
       <main key={pathname} className="page-in mx-auto w-full max-w-[1440px] flex-1 lg:px-4 2xl:px-6">
         <Outlet />
       </main>
+
+      {/* Floating shortlist, once something is hearted (above the tab bar on phones). */}
+      {shortlist.length && !detail && !onShortlist ? (
+        <Link
+          to="/templates?shortlist=1"
+          className="fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] left-4 z-20 inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-surface px-4 font-display text-[15px] text-ink shadow-[0_10px_30px_-10px_rgba(42,26,31,0.45)] md:bottom-6 md:left-6"
+        >
+          <Heart className="size-4 fill-primary text-primary" /> {t('Shortlist')}
+          <span className="grid min-w-6 place-items-center rounded-full bg-primary/10 px-1.5 text-xs font-semibold text-primary tabular-nums">{shortlist.length}</span>
+        </Link>
+      ) : null}
 
       {detail ? null : <Footer />}
       {detail ? null : <BottomTabBar />}
