@@ -1,0 +1,148 @@
+@import 'tailwindcss';
+/* Classes used in the build-time pre-rendered HTML. */
+@source '../scripts';
+
+/* Brand tokens from the plan's design system. */
+@theme {
+  --color-primary: #7a1f3d;
+  --color-primary-dark: #5e1630;
+  --color-accent: #c9a54c;
+  /* Darker gold for text: 4.8:1 on ivory. Keep --color-accent for fills and borders. */
+  --color-accent-ink: #8a6a1e;
+  --color-background: #fff9f3;
+  --color-surface: #ffffff;
+  --color-ink: #2a1a1f;
+  --color-muted: #7b6a6f;
+  --color-border: #eadfd6;
+  --color-success: #2e7d4f;
+  --color-error: #c62828;
+
+  --font-sans: 'Inter', 'Noto Sans Devanagari', system-ui, sans-serif;
+  --font-display: 'Playfair Display', Georgia, serif;
+
+  --radius-card: 16px;
+  --radius-button: 12px;
+}
+
+html,
+body,
+#root {
+  min-height: 100dvh;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+/* 16px inputs stop iOS Safari from zooming into fields. */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+/* Only for elements with no bottom padding of their own (it replaces it). */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Bottom padding PLUS the phone's home-indicator area: pb-safe-3 = 12px + inset.
+   Use this (not safe-bottom) on bars that need their own padding. */
+@utility pb-safe-* {
+  padding-bottom: calc(--spacing(--value(integer)) + env(safe-area-inset-bottom));
+}
+
+.safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+/* Fade only: a transform here would make it the containing block for
+   position: fixed children (bottom bars), which would jump while it runs. */
+@keyframes page-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.page-in {
+  animation: page-in 160ms ease-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .page-in {
+    animation: none;
+  }
+}
+
+@keyframes confetti-fall {
+  0% {
+    opacity: 1;
+    translate: 0 -20px;
+  }
+  100% {
+    opacity: 0;
+    translate: 0 320px;
+    rotate: 540deg;
+  }
+}
+.confetti {
+  opacity: 0;
+  animation: confetti-fall 1400ms ease-in forwards;
+}
+
+/* ---- Feedback motion (see the UX audit's motion spec) ---- */
+
+/* Step changes: slide 24px in the direction of travel. `translate` (not transform)
+   keeps it off any fixed-position bars, which live outside the step container. */
+@keyframes step-in-fwd {
+  from { opacity: 0; translate: 24px 0; }
+  to { opacity: 1; translate: 0 0; }
+}
+@keyframes step-in-back {
+  from { opacity: 0; translate: -24px 0; }
+  to { opacity: 1; translate: 0 0; }
+}
+.step-in-fwd { animation: step-in-fwd 220ms cubic-bezier(0.2, 0, 0, 1); }
+.step-in-back { animation: step-in-back 220ms cubic-bezier(0.2, 0, 0, 1); }
+
+/* Ticks and status dots pop in. */
+@keyframes pop {
+  from { opacity: 0; scale: 0.6; }
+  to { opacity: 1; scale: 1; }
+}
+.pop { animation: pop 160ms ease-out; }
+
+/* Saving dot. */
+@keyframes save-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+.save-pulse { animation: save-pulse 900ms ease-in-out infinite; }
+
+/* Banners that drop in under the header. */
+@keyframes slide-down {
+  from { opacity: 0; translate: 0 -8px; }
+  to { opacity: 1; translate: 0 0; }
+}
+.slide-down { animation: slide-down 200ms ease-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .step-in-fwd,
+  .step-in-back,
+  .slide-down { animation: page-in 120ms ease-out; }
+  .pop { animation: none; }
+  .save-pulse { animation: none; opacity: 0.7; }
+}

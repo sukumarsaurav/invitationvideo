@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+# Private, per-customer pages
+Disallow: /editor/
+Disallow: /render/
+Disallow: /p/
+Disallow: /account
+Disallow: /my-videos
+
+Sitemap: https://invitationvideos.com/sitemap.xml
