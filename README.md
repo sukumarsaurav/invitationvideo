@@ -102,8 +102,29 @@ service-role/secret key or a Razorpay secret in a `VITE_` variable.
    - `schema.title`: e.g. `'{bride} & {groom}'`, used in My Videos and share links.
 2. Add its meta to `src/templates/metas.ts` and its definition to `src/templates/registry.ts`.
    Give it `tags` (from `src/templates/taxonomy.ts`), and optionally `trending` / `popularity`.
-3. Run `npm run seed:generate` then `npm run db:reset`. The sitemap and pre-rendered pages pick it
-   up automatically on the next build.
+   These are only starting values: once seeded, the admin panel owns price, name, copy, tags and flags.
+3. Run `npm run seed:generate` then `npm run db:reset` (locally, `seed.dev.sql` publishes everything).
+4. Deploy, then apply `supabase/seed.sql` to the hosted project. The template arrives **hidden**: open
+   `/admin/templates`, set its price and copy, check the preview, and press **Publish**. Re-running the
+   seed later only updates code-owned fields (size, fps, duration, schema), never admin edits.
+
+## Admin panel
+
+`/admin` manages templates (price, copy, tags, order, publish/hide), customers (search, videos,
+orders, support notes), site settings (announcement, support WhatsApp, maintenance notice) and shows
+a dashboard and an append-only audit log. It is a separate bundle that customers never download. The
+plan, with later phases (payments, refunds, coupons, analytics), is the Admin Panel Plan doc.
+
+- **Access:** a row in `invites.admins` (role `viewer`, `support`, `manager` or `owner`) plus two-step
+  sign-in with an authenticator app, set up on first visit. The database checks both on every query
+  (`invites.is_admin()`), so the panel's own screens are not the security boundary.
+- **Make someone an admin** (SQL editor; Phase 4 adds a screen for this):
+  `insert into invites.admins (user_id, role) select id, 'owner' from auth.users where email = 'you@example.com';`
+  They must have signed in to the store once first.
+- **Store changes** reach visitors on their next page load. Pre-rendered search pages and the sitemap
+  read the published catalogue at build time, so they update on the next deploy.
+- **Locally:** two-step sign-in is enabled in `supabase/config.toml`; sign-in codes arrive in Mailpit
+  (http://localhost:54324).
 
 Template rules for the browser renderer: use text, SVG, linear gradients, transforms, shadows and
 images. Avoid radial gradients. Load fonts through `src/templates/shared/fonts.ts`.
@@ -117,4 +138,8 @@ images. Avoid radial gradients. Load fonts through `src/templates/shared/fonts.t
 | `src/pages/RenderPage.tsx` | HD render with progress (payment skipped in development) |
 | `src/lib/drafts.ts` | Drafts in localStorage until Supabase sync is wired |
 | `src/templates/` | Template types, data helpers, shared pieces, templates |
+| `src/templates/catalogue.ts` | Lays the admin panel's published values over the code templates (app and build) |
+| `src/lib/catalogue.ts`, `src/lib/siteSettings.ts` | Load the published catalogue and public settings in the browser |
+| `src/admin/` | Admin panel (lazy-loaded at `/admin`) |
+| `scripts/catalogue-build.ts` | Published catalogue for the sitemap and pre-rendered pages |
 | `supabase/migrations/` | Schema + RLS |

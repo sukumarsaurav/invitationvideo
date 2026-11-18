@@ -62,6 +62,8 @@ const router = createBrowserRouter([
       { path: '/render/:draftId', element: <RenderPage /> },
       // Public, view-only preview that customers send to family.
       { path: '/p/:token', element: <SharedPreviewPage /> },
+      // Admin panel: its own bundle, downloaded only when someone opens /admin.
+      { path: '/admin/*', lazy: async () => ({ Component: (await import('@/admin/AdminApp')).AdminApp }) },
     ],
   },
 ]);

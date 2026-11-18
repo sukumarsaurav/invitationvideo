@@ -1,15 +1,16 @@
 import { Link } from 'react-router-dom';
+import { useSupportWhatsapp } from '@/lib/siteSettings';
 import { TAGLINE } from '@/config';
 import { useI18n } from '@/lib/i18n';
 import { categoriesWithTemplates, tagsWithTemplates } from '@/templates/registry';
 import { LanguageSwitch } from './LanguageSwitch';
 import { Logo } from './Logo';
 
-const SUPPORT_WHATSAPP = (import.meta.env.VITE_SUPPORT_WHATSAPP as string | undefined)?.replace(/\D/g, '') || null;
 
 /** Links to every occasion and tag page: helps people browse and search engines find each page. */
 export const Footer = () => {
   const { t } = useI18n();
+  const SUPPORT_WHATSAPP = useSupportWhatsapp();
   const linkCls = 'inline-flex min-h-9 items-center text-sm text-muted hover:text-primary';
   return (
     <footer className="mt-12 border-t border-border bg-surface pb-safe-24 md:pb-10">

@@ -2,10 +2,11 @@
 // Runs before every production build (npm run build), so new templates and tags are listed automatically.
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { TEMPLATE_METAS } from '../src/templates/metas.ts';
+import { BUILD_TEMPLATES } from './catalogue-build.ts';
 import { CATEGORIES, SITE_URL, TAGS } from '../src/templates/taxonomy.ts';
 
-const TEMPLATES = TEMPLATE_METAS;
+// Published templates only: hidden ones have no page to index.
+const TEMPLATES = BUILD_TEMPLATES;
 const today = new Date().toISOString().slice(0, 10);
 
 type Entry = { path: string; priority: number; changefreq: 'daily' | 'weekly' | 'monthly' };
@@ -44,6 +45,7 @@ const robots = [
   'Disallow: /p/',
   'Disallow: /account',
   'Disallow: /my-videos',
+  'Disallow: /admin',
   '',
   `Sitemap: ${SITE_URL}/sitemap.xml`,
   '',

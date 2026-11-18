@@ -1,23 +1,25 @@
 import { X } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ANNOUNCEMENT } from '@/config';
 import { useI18n } from '@/lib/i18n';
+import { useSiteSettings } from '@/lib/siteSettings';
 
 const KEY = 'iv.announcementClosed';
 
-/** Thin maroon strip above the header. Text comes from src/config.ts; closable for the session. */
+/** Thin maroon strip above the header. Text comes from Settings in the admin panel (src/config.ts until it loads); closable for the session. */
 export const AnnouncementBar = () => {
   const { t } = useI18n();
-  const [closed, setClosed] = useState(() => {
+  const { announcement: setting } = useSiteSettings();
+  // The text that was closed; a new announcement shows again.
+  const [closedText, setClosedText] = useState<string | null>(() => {
     try {
-      return sessionStorage.getItem(KEY) === ANNOUNCEMENT?.text;
+      return sessionStorage.getItem(KEY);
     } catch {
-      return false;
+      return null;
     }
   });
-  const announcement = ANNOUNCEMENT;
-  if (!announcement || closed) return null;
+  const announcement = setting.enabled && setting.text.trim() ? setting : null;
+  if (!announcement || closedText === announcement.text) return null;
 
   const body = (
     <span className="flex items-center justify-center gap-2">
@@ -40,7 +42,7 @@ export const AnnouncementBar = () => {
       </div>
       <button
         onClick={() => {
-          setClosed(true);
+          setClosedText(announcement.text);
           try {
             sessionStorage.setItem(KEY, announcement.text);
           } catch {

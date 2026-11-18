@@ -1,4 +1,5 @@
 import { ChevronDown, Download, Eye, PenLine } from 'lucide-react';
+import { useCatalogue } from '@/lib/catalogue';
 import { Link } from 'react-router-dom';
 import { Hero } from '@/components/Hero';
 import { TemplateCard } from '@/components/TemplateCard';
@@ -18,6 +19,7 @@ const STEPS = [
 
 export const HomePage = () => {
   const { t } = useI18n();
+  useCatalogue(); // re-render when the admin-published catalogue arrives
   const trending = trendingTemplates();
   const popular = popularTemplates();
   const occasions = categoriesWithTemplates();

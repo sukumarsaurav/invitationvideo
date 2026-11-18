@@ -1,4 +1,5 @@
 import { Search, SearchX, X } from 'lucide-react';
+import { useCatalogue } from '@/lib/catalogue';
 import { useEffect, useRef } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { CategoryChips } from '@/components/CategoryChips';
@@ -13,6 +14,7 @@ import { categoriesWithTemplates, categoryName, getCategory, searchTemplates, ta
 
 export const TemplatesPage = () => {
   const { t } = useI18n();
+  useCatalogue(); // re-render when the admin-published catalogue arrives
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   // Category pages live at /invitations/<slug> (crawlable); ?category= still works for old links.

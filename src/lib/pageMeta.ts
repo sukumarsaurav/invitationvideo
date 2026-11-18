@@ -129,8 +129,9 @@ export const templateMeta = (def: TemplateMeta | undefined, slug: string | undef
   if (!def) return { title: 'Template not found', description: '', path: `/t/${slug ?? ''}`, noindex: true, jsonLd: [] };
   const category = categoryLabel(def.category);
   return {
-    title: `${def.name} – ${category} invitation video`,
-    description: `${def.description} Personalise with your names, date and photo, preview free, and download HD for ₹${def.priceInr}.`,
+    // SEO title and description from the admin panel win over the generated ones.
+    title: def.seoTitle || `${def.name} – ${category} invitation video`,
+    description: def.seoDescription || `${def.description} Personalise with your names, date and photo, preview free, and download HD for ₹${def.priceInr}.`,
     path: `/t/${def.slug}`,
     jsonLd: [
       {

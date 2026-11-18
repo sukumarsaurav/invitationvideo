@@ -98,4 +98,9 @@ export type TemplateDefinition = {
   trending?: boolean;
   /** Sort order for "Popular" (higher first). Replace with real render counts later. */
   popularity?: number;
+  /** Store order set in the admin panel (lower first). */
+  sortOrder?: number;
+  /** Search-result title and description set in the admin panel; fall back to name and description. */
+  seoTitle?: string;
+  seoDescription?: string;
 };

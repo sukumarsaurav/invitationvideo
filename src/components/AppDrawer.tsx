@@ -1,4 +1,5 @@
 import { CircleHelp, Languages, LogIn, LogOut, MessageCircle, X } from 'lucide-react';
+import { useSupportWhatsapp } from '@/lib/siteSettings';
 import { useNavigate } from 'react-router-dom';
 import { Drawer } from 'vaul';
 import { useAuth } from '@/lib/auth';
@@ -11,13 +12,13 @@ type Props = { open: boolean; onOpenChange: (open: boolean) => void };
 const linkCls = 'flex min-h-11 w-full items-center gap-3 rounded-[10px] px-3 text-left text-[15px] text-ink active:bg-background';
 
 /** Digits only, e.g. 919876543210. Leave unset to hide the WhatsApp link. */
-const SUPPORT_WHATSAPP = (import.meta.env.VITE_SUPPORT_WHATSAPP as string | undefined)?.replace(/\D/g, '') || null;
 
 /** Left side drawer: account, categories, language, help. Swipe left to close. */
 export const AppDrawer = ({ open, onOpenChange }: Props) => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { t, lang, setLang } = useI18n();
+  const SUPPORT_WHATSAPP = useSupportWhatsapp();
   const go = (to: string) => {
     onOpenChange(false);
     navigate(to);

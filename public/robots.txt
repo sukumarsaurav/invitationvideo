@@ -6,5 +6,6 @@ Disallow: /render/
 Disallow: /p/
 Disallow: /account
 Disallow: /my-videos
+Disallow: /admin
 
 Sitemap: https://invitationvideos.com/sitemap.xml

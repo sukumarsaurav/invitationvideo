@@ -1,4 +1,5 @@
 import { Player, Thumbnail } from '@remotion/player';
+import { useCatalogue } from '@/lib/catalogue';
 import { ArrowRight, Eye, Send, Timer } from 'lucide-react';
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
@@ -42,6 +43,7 @@ const FramedVideo = ({ def, play, className }: { def: TemplateDefinition; play: 
 /** Landing hero: headline, divider, call to action, three promises and a live template. */
 export const Hero = () => {
   const { t } = useI18n();
+  useCatalogue(); // re-render when the admin-published catalogue arrives
   const [main, side] = trendingTemplates();
   const motion = !reducedMotion();
   const promises = [

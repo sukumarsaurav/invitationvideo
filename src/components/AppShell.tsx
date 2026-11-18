@@ -1,9 +1,11 @@
 import { Menu, Search } from 'lucide-react';
+import { useCatalogue } from '@/lib/catalogue';
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useMatches } from 'react-router-dom';
 import type { RouteHandle } from '@/App';
 import { cn } from '@/lib/cn';
 import { useI18n } from '@/lib/i18n';
+import { useSiteSettings } from '@/lib/siteSettings';
 import { AnnouncementBar } from './AnnouncementBar';
 import { AppDrawer } from './AppDrawer';
 import { BottomTabBar } from './BottomTabBar';
@@ -19,6 +21,8 @@ export const AppShell = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { pathname } = useLocation();
   const { t } = useI18n();
+  useCatalogue(); // re-render when the admin-published catalogue arrives
+  const { maintenance } = useSiteSettings();
   // Detail screens draw their own back bar on phones and hide the tabs.
   const detail = useMatches().some((m) => (m.handle as RouteHandle | undefined)?.detailScreen);
 
@@ -27,6 +31,11 @@ export const AppShell = () => {
   return (
     <div className={cn('flex min-h-dvh flex-col pt-[env(safe-area-inset-top)]', detail && 'max-md:pt-0')}>
       <div aria-hidden className={cn('fixed inset-x-0 top-0 z-30 h-[env(safe-area-inset-top)] bg-primary', detail && 'max-md:hidden')} />
+      {maintenance.enabled && maintenance.text.trim() ? (
+        <div role="status" className="bg-accent px-4 py-2 text-center text-sm font-semibold text-ink">
+          {maintenance.text}
+        </div>
+      ) : null}
       <div className={cn(detail && 'max-md:hidden')}>
         <AnnouncementBar />
       </div>

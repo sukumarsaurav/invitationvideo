@@ -27,11 +27,12 @@ import {
   usedTags,
   type PageMeta,
 } from '../src/lib/pageMeta.ts';
-import { TEMPLATE_METAS } from '../src/templates/metas.ts';
+import { BUILD_TEMPLATES } from './catalogue-build.ts';
 import { CATEGORIES, getCategory, getTag, SITE_URL } from '../src/templates/taxonomy.ts';
 import type { TemplateMeta } from '../src/templates/types';
 
-const TEMPLATES: TemplateMeta[] = TEMPLATE_METAS;
+// Published templates only, with the admin panel's prices and copy.
+const TEMPLATES: TemplateMeta[] = BUILD_TEMPLATES;
 
 const dist = (p: string) => fileURLToPath(new URL(`../dist/${p}`, import.meta.url));
 const shell = readFileSync(dist('index.html'), 'utf8');

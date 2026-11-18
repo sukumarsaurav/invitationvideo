@@ -1,4 +1,5 @@
 import { Thumbnail } from '@remotion/player';
+import { useCatalogue } from '@/lib/catalogue';
 import { ArrowLeft, ChevronRight, Clock, Film, Image, Pencil } from 'lucide-react';
 import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -14,20 +15,23 @@ import { templateMeta } from '@/lib/pageMeta';
 import { useSeo } from '@/lib/seo';
 import { useBack } from '@/lib/useBack';
 import { allFields, getDurationInFrames, holdFrameOf, makeExampleData } from '@/templates/data';
-import { categoryName, getTemplate, similarTemplates } from '@/templates/registry';
+import { categoryName, getTemplate, isListed, similarTemplates } from '@/templates/registry';
 import { bindTemplate } from '@/templates/TemplateVideo';
 import { NotFoundPage } from './NotFoundPage';
 
 export const TemplateDetailPage = () => {
   const { t } = useI18n();
+  useCatalogue(); // re-render when the admin-published catalogue arrives
   const { slug } = useParams();
   const navigate = useNavigate();
   const back = useBack('/templates');
   const def = getTemplate(slug);
   const data = useMemo(() => (def ? makeExampleData(def) : null), [def]);
   const component = useMemo(() => (def ? bindTemplate(def) : null), [def]);
-  useSeo(templateMeta(def, slug));
-  if (!def || !data || !component) return <NotFoundPage />;
+  // A hidden template reads as "not found" to search engines too (noindex).
+  useSeo(templateMeta(isListed(slug) ? def : undefined, slug));
+  // Hidden in the admin panel: gone from the store (owners of existing videos still use the editor).
+  if (!def || !data || !component || !isListed(slug)) return <NotFoundPage />;
 
   const duration = getDurationInFrames(def, data);
   const fields = allFields(def);

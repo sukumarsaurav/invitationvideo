@@ -6,10 +6,20 @@ import type { TemplateDefinition } from './types';
 
 export { CATEGORIES, TAGS, getCategory, getTag, SITE_URL } from './taxonomy';
 
-export const TEMPLATES: TemplateDefinition[] = [royalWedding, pastelBirthday];
+/** Every template in the code, published or not: existing drafts and paid videos always render. */
+export const ALL_TEMPLATES: TemplateDefinition[] = [royalWedding, pastelBirthday];
+
+/**
+ * Templates customers can find in the store, in store order. Starts as every code template and is
+ * replaced in place by src/lib/catalogue.ts with what the admin panel has published.
+ */
+export const TEMPLATES: TemplateDefinition[] = [...ALL_TEMPLATES];
 
 export const getTemplate = (slug: string | undefined): TemplateDefinition | undefined =>
-  TEMPLATES.find((t) => t.slug === slug);
+  ALL_TEMPLATES.find((t) => t.slug === slug);
+
+/** Published and visible in the store (hidden templates still open in the editor for their owners). */
+export const isListed = (slug: string | undefined): boolean => TEMPLATES.some((t) => t.slug === slug);
 
 export const categoryName = (slug: string): string =>
   CATEGORIES.find((c) => c.slug === slug)?.name ?? slug;

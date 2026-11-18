@@ -1,7 +1,11 @@
-// Writes supabase/seed.sql from the template meta files, so the database
-// catalogue always matches the templates in code. Upserts, so it can be re-run
-// against a database that already has drafts (psql -f supabase/seed.sql).
+// Writes supabase/seed.sql from the template meta files. Safe to re-run against the live
+// database (psql -f supabase/seed.sql):
+//   - a NEW template is inserted hidden (is_active = false): an admin sets price and copy, then publishes;
+//   - an EXISTING template only gets its code-owned fields updated (size, fps, duration, schema,
+//     code_hash). Price, name, copy, tags, flags and order belong to the admin panel and are never touched.
+// Locally, supabase/seed.dev.sql then publishes everything so the store isn't empty after db:reset.
 // Run with: npm run seed:generate   (Node 22.6+ strips the TypeScript types)
+import { createHash } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { TEMPLATE_METAS } from '../src/templates/metas.ts';
@@ -25,19 +29,24 @@ const lines: string[] = [
   '',
   'insert into invites.categories (slug, name, sort_order) values',
   CATEGORIES.map(([slug, name], i) => `  (${q(slug)}, ${q(name)}, ${i})`).join(',\n'),
-  'on conflict (slug) do update set name = excluded.name, sort_order = excluded.sort_order;',
+  // Category names and order become admin-editable later; never overwrite them.
+  'on conflict (slug) do nothing;',
   '',
 ];
 
 for (const t of TEMPLATES) {
   const duration = t.schema.clips.reduce((sum, c) => sum + c.durationInFrames, 0);
+  // Changes whenever the code-owned shape changes; the admin panel compares it to spot drift.
+  const codeHash = createHash('sha256')
+    .update(JSON.stringify({ fps: t.fps, width: t.width, height: t.height, duration, schema: t.schema }))
+    .digest('hex')
+    .slice(0, 16);
   lines.push(
-    'insert into invites.templates (slug, category_id, name, description, fps, width, height, duration_frames, price_inr, schema, tags, is_trending, popularity)',
-    `select ${q(t.slug)}, c.id, ${q(t.name)}, ${q(t.description)}, ${t.fps}, ${t.width}, ${t.height}, ${duration}, ${t.priceInr}, ${q(JSON.stringify(t.schema))}::jsonb, array[${t.tags.map(q).join(', ')}]::text[], ${Boolean(t.trending)}, ${t.popularity ?? 0}`,
+    'insert into invites.templates (slug, category_id, name, description, fps, width, height, duration_frames, price_inr, schema, tags, is_trending, popularity, is_active, code_hash)',
+    `select ${q(t.slug)}, c.id, ${q(t.name)}, ${q(t.description)}, ${t.fps}, ${t.width}, ${t.height}, ${duration}, ${t.priceInr}, ${q(JSON.stringify(t.schema))}::jsonb, array[${t.tags.map(q).join(', ')}]::text[], ${Boolean(t.trending)}, ${t.popularity ?? 0}, false, ${q(codeHash)}`,
     `from invites.categories c where c.slug = ${q(t.category)}`,
-    'on conflict (slug) do update set category_id = excluded.category_id, name = excluded.name, description = excluded.description,',
-    '  fps = excluded.fps, width = excluded.width, height = excluded.height, duration_frames = excluded.duration_frames,',
-    '  price_inr = excluded.price_inr, schema = excluded.schema, tags = excluded.tags, is_trending = excluded.is_trending, popularity = excluded.popularity;',
+    'on conflict (slug) do update set fps = excluded.fps, width = excluded.width, height = excluded.height,',
+    '  duration_frames = excluded.duration_frames, schema = excluded.schema, code_hash = excluded.code_hash;',
     '',
   );
 }

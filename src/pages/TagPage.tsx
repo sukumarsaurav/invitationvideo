@@ -1,4 +1,5 @@
 import { ChevronRight } from 'lucide-react';
+import { useCatalogue } from '@/lib/catalogue';
 import { Link, useParams } from 'react-router-dom';
 import { TagChips } from '@/components/TagChips';
 import { TemplateCard } from '@/components/TemplateCard';
@@ -11,6 +12,7 @@ import { NotFoundPage } from './NotFoundPage';
 /** Landing page for one tag, e.g. /tags/hindu-wedding. Written to rank for that search. */
 export const TagPage = () => {
   const { t } = useI18n();
+  useCatalogue(); // re-render when the admin-published catalogue arrives
   const { tag: slug } = useParams();
   const tag = getTag(slug);
   const list = tag ? templatesWithTag(tag.slug) : [];
