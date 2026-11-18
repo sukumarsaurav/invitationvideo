@@ -291,7 +291,18 @@ export const createShareLink = async (id: string): Promise<string> => {
   return `${window.location.origin}/p/${token}`;
 };
 
-export type SharedVideo = { templateSlug: string; data: VideoData; updatedAt: string };
+/**
+ * The payment status stored on the server for this video, read fresh (not from the cached list).
+ * Null for guests, when Supabase isn't configured, or when the row can't be read.
+ */
+export const fetchServerStatus = async (id: string): Promise<DraftStatus | null> => {
+  if (!state.userId || !supabase) return null;
+  const { data, error } = await supabase.from('user_videos').select('status').eq('id', id).maybeSingle();
+  if (error || !data) return null;
+  return (data as { status: DraftStatus }).status;
+};
+
+export type SharedVideo ={ templateSlug: string; data: VideoData; updatedAt: string };
 
 /** Reads a shared video by its link token. Works signed out. */
 export const fetchSharedVideo = async (token: string): Promise<SharedVideo | null> => {

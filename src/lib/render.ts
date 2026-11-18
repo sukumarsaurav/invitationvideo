@@ -5,6 +5,15 @@ import type { TemplateDefinition, VideoData } from '@/templates/types';
 
 export type RenderQuality = '1080p' | '720p';
 
+/**
+ * HD downloads without payment: always in development, and in production only when
+ * VITE_FREE_HD=true is set on purpose (e.g. a launch promotion). Otherwise the server's
+ * payment status decides (see RenderPage).
+ * Note: rendering happens in the customer's browser, so this check stops ordinary customers,
+ * not someone editing the app's JavaScript.
+ */
+export const FREE_HD = import.meta.env.DEV || import.meta.env.VITE_FREE_HD === 'true';
+
 export const scaleFor = (q: RenderQuality) => (q === '1080p' ? 1 : 720 / 1080);
 
 /** Default quality for this device: full HD on computers, 720p on phones (faster, plenty for WhatsApp). */

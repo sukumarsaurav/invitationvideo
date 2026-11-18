@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowLeft, CheckCircle2, ChevronDown, Clock, Download, Loader2, Send } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, ChevronDown, Clock, Download, Loader2, Lock, Send } from 'lucide-react';
 import { useSeo } from '@/lib/seo';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
@@ -6,13 +6,14 @@ import { Button } from '@/components/Button';
 import { INSTALL_MOMENT } from '@/components/InstallPrompt';
 import { useToast } from '@/components/Toast';
 import { cn } from '@/lib/cn';
-import { markRendered, useDraft } from '@/lib/drafts';
+import { fetchServerStatus, markRendered, useDraft } from '@/lib/drafts';
 import { tap } from '@/lib/haptics';
 import { useI18n } from '@/lib/i18n';
 import {
   checkCanRender,
   defaultQuality,
   downloadBlob,
+  FREE_HD,
   estimateRenderSeconds,
   renderVideo,
   type RenderCheck,
@@ -56,6 +57,22 @@ export const RenderPage = () => {
   const wake = useWakeLock(phase.kind === 'rendering');
   useSeo({ title: 'Download HD video', description: '', path: '/render', noindex: true });
 
+  // Who may make the HD file: everyone when FREE_HD, otherwise only videos the server marks as paid.
+  // The status is read fresh from the server; a guest's local status is never trusted.
+  const [access, setAccess] = useState<'checking' | 'allowed' | 'locked'>(FREE_HD ? 'allowed' : 'checking');
+  const draftKey = draft?.id;
+  useEffect(() => {
+    if (FREE_HD || loading || !draftKey) return;
+    let active = true;
+    setAccess('checking');
+    fetchServerStatus(draftKey).then((s) => {
+      if (active) setAccess(s === 'paid' || s === 'rendered' ? 'allowed' : 'locked');
+    });
+    return () => {
+      active = false;
+    };
+  }, [loading, draftKey]);
+
   useEffect(() => {
     if (!def) return;
     setCheck(null);
@@ -84,6 +101,7 @@ export const RenderPage = () => {
   const estimate = estimateRenderSeconds(totalFrames, quality);
 
   const start = async () => {
+    if (access !== 'allowed') return;
     const controller = new AbortController();
     abortRef.current = controller;
     const startedAt = Date.now();
@@ -216,18 +234,37 @@ export const RenderPage = () => {
               </div>
             ) : null}
 
-            <Button className="mt-5 w-full" onClick={start} disabled={!check?.ok}>
-              {check === null ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />} {t('Make my HD video')}
-            </Button>
+            {access === 'locked' ? (
+              <>
+                <div className="mt-4 rounded-button bg-accent/15 p-3 text-sm">
+                  <p className="flex items-center gap-2 font-semibold">
+                    <Lock className="size-4" /> {t('HD download opens soon')}
+                  </p>
+                  <p className="mt-1">{t('Online payment is being set up. Until then, share the free preview with family from the editor.')}</p>
+                </div>
+                <Link
+                  to={`/editor/${draft.id}`}
+                  className="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-button bg-primary font-semibold text-white"
+                >
+                  <ArrowLeft className="size-4" /> {t('Back to editor')}
+                </Link>
+              </>
+            ) : (
+              <Button className="mt-5 w-full" onClick={start} disabled={!check?.ok || access !== 'allowed'}>
+                {check === null || access === 'checking' ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}{' '}
+                {t('Make my HD video')}
+              </Button>
+            )}
 
             <button
+              hidden={access === 'locked'}
               onClick={() => setShowOptions((v) => !v)}
               className="mt-2 flex min-h-11 w-full items-center justify-center gap-1 text-sm text-muted"
               aria-expanded={showOptions}
             >
               {t('More options')} <ChevronDown className={cn('size-4 transition-transform', showOptions && 'rotate-180')} />
             </button>
-            {showOptions ? (
+            {showOptions && access !== 'locked' ? (
               <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label={t('Quality')}>
                 {(['1080p', '720p'] as const).map((q) => (
                   <button

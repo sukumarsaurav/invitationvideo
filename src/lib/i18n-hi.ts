@@ -232,6 +232,9 @@ export const HI: Record<string, string> = {
   'Back to editor': 'एडिटर पर वापस',
   'Development mode:': 'डेवलपमेंट मोड:',
   'payment is skipped. Razorpay is added in Phase 3.': 'पेमेंट छोड़ दिया गया है।',
+  'HD download opens soon': 'HD डाउनलोड जल्द शुरू होगा',
+  'Online payment is being set up. Until then, share the free preview with family from the editor.':
+    'ऑनलाइन पेमेंट की तैयारी चल रही है। तब तक एडिटर से फ्री प्रीव्यू परिवार के साथ शेयर करें।',
   'Your video is ready!': 'आपका वीडियो तैयार है!',
   'Choose WhatsApp, or "Save video" to keep it in your photos.': 'WhatsApp चुनें, या फ़ोटो में रखने के लिए "Save video" चुनें।',
   'Download file': 'फ़ाइल डाउनलोड करें',

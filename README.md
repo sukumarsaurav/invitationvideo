@@ -60,6 +60,12 @@ They override `.env.production`.
 | `VITE_SUPABASE_ANON_KEY` | the project's publishable key (`sb_publishable_…`, Supabase → Project Settings → API Keys) |
 | `VITE_GOOGLE_AUTH_ENABLED` | `false` (set `true` once Google sign-in is configured in Supabase) |
 | `VITE_SUPPORT_WHATSAPP` | optional: support number, digits with country code, e.g. `919876543210` |
+| `VITE_FREE_HD` | leave unset. `true` lets anyone download HD without paying (e.g. a launch promotion) |
+
+**HD downloads need payment in production.** `/render/:id` only makes the HD file when the server says the
+video is `paid` or `rendered` (status is set only by the service role). Until Razorpay is wired, production
+shows "HD download opens soon". Development always allows it. Because the video is rendered in the
+customer's browser, this stops ordinary customers, not someone editing the app's JavaScript.
 
 All are public (`VITE_` values are built into the browser bundle). Never put the Supabase
 service-role/secret key or a Razorpay secret in a `VITE_` variable.
@@ -74,6 +80,9 @@ service-role/secret key or a Razorpay secret in a `VITE_` variable.
   (18 Nov 2026); the old `public` tables from the earlier version were removed. `.env.production`
   points the build at it. Later schema changes: add a migration file, then `supabase db push`
   (link once with `supabase link --project-ref clhfqyyqjwcrgpfrplyy`), and re-run `supabase/seed.sql`.
+- **Legacy storage buckets** (`template-assets`, `generated-videos`, `order-uploads`) are empty, private and
+  have no access policies (18 Nov 2026). Supabase blocks deleting buckets with SQL: delete them in
+  *Storage* in the dashboard. Don't add storage policies without a `bucket_id` filter.
 - **`invites` schema is exposed to the API** (done 18 Nov 2026 with
   `alter role authenticator set pgrst.db_schemas = 'public, graphql_public, invites'; notify pgrst, 'reload config';`).
   If someone later saves *Project Settings → Data API → Exposed schemas* without `invites`, the API
