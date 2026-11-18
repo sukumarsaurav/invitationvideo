@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { cn, formatInr } from '@/lib/cn';
+import { cn } from '@/lib/cn';
 import { supabase } from '@/lib/supabase';
-import { Card, ErrorNote, Loading, PageHeader } from './ui';
+import { Card, ErrorNote, formatPaise, Loading, PageHeader } from './ui';
+
+/** Money from the server is in paise. */
 
 type Period = { new_customers: number; drafts_created: number; share_links: number; paid_orders: number; gross_revenue: number; refunds: number };
 type Dashboard = {
@@ -35,7 +37,7 @@ const Change = ({ now, before }: { now: number; before: number }) => {
 const Kpi = ({ label, now, before, money }: { label: string; now: number; before: number; money?: boolean }) => (
   <div className="rounded-card border border-border bg-surface p-4">
     <p className="text-sm text-muted">{label}</p>
-    <p className="mt-1 font-display text-3xl font-semibold tabular-nums">{money ? formatInr(now) : now.toLocaleString('en-IN')}</p>
+    <p className="mt-1 font-display text-3xl font-semibold tabular-nums">{money ? formatPaise(now) : now.toLocaleString('en-IN')}</p>
     <Change now={now} before={before} />
   </div>
 );
@@ -48,6 +50,7 @@ export const DashboardPage = () => {
   useEffect(() => {
     let active = true;
     setData(null);
+    setError(null);
     const to = new Date();
     const from = days === 1 ? startOfTodayIst() : new Date(startOfTodayIst().getTime() - (days - 1) * 864e5);
     supabase!.rpc('admin_dashboard', { p_from: from.toISOString(), p_to: to.toISOString() }).then(({ data: d, error: e }) => {
@@ -68,7 +71,7 @@ export const DashboardPage = () => {
     <>
       <PageHeader
         title="Dashboard"
-        description="India time. Each number is compared with the period of the same length just before."
+        description="India time. Each number is compared with the period of the same length just before. Net revenue is payments in the period minus refunds made in it. Admin accounts are not counted as customers."
         actions={
           <div className="flex rounded-button border border-border bg-surface p-0.5" role="radiogroup" aria-label="Date range">
             {RANGES.map((r) => (
@@ -98,7 +101,7 @@ export const DashboardPage = () => {
             <div className="rounded-card border border-border bg-surface p-4">
               <p className="text-sm text-muted">Conversion</p>
               <p className="mt-1 font-display text-3xl font-semibold tabular-nums">{conversion(c)}%</p>
-              <span className="text-xs text-muted">paid orders / drafts</span>
+              <span className="text-xs text-muted">paid orders / drafts in the period</span>
             </div>
           </div>
 
@@ -129,7 +132,7 @@ export const DashboardPage = () => {
                         </td>
                         <td className="py-2 text-right tabular-nums">{t.drafts}</td>
                         <td className="py-2 text-right tabular-nums">{t.paid_orders}</td>
-                        <td className="py-2 text-right tabular-nums">{formatInr(t.revenue)}</td>
+                        <td className="py-2 text-right tabular-nums">{formatPaise(t.revenue)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -139,7 +142,7 @@ export const DashboardPage = () => {
             <Card title="All time">
               <dl className="space-y-3 text-sm">
                 <div className="flex justify-between">
-                  <dt className="text-muted">Customers</dt>
+                  <dt className="text-muted">Customers (admins excluded)</dt>
                   <dd className="font-semibold tabular-nums">{data.totals.customers.toLocaleString('en-IN')}</dd>
                 </div>
                 <div className="flex justify-between">

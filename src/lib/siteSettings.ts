@@ -7,7 +7,8 @@ import { ANNOUNCEMENT } from '@/config';
  * Until anything arrives, the code defaults below apply, so the site never waits on the database.
  */
 export type SiteSettings = {
-  announcement: { enabled: boolean; text: string; link?: string };
+  /** link: a page on this site; null means no link (an admin cleared it). */
+  announcement: { enabled: boolean; text: string; link?: string | null };
   support_whatsapp: { number: string };
   payments_enabled: { enabled: boolean; message: string };
   maintenance: { enabled: boolean; text: string };
@@ -29,10 +30,38 @@ const key = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 let settings: SiteSettings = DEFAULT_SETTINGS;
 const listeners = new Set<() => void>();
 
+/** A page on this site ("/templates"), never another site ("//x", "/\\x", "https://x"). Same rule as the database. */
+export const isSiteLink = (link: string) => /^\/([^/\\\s]\S*)?$/.test(link);
+
+type Raw = Record<string, unknown>;
+const isObj = (v: unknown): v is Raw => Boolean(v) && typeof v === 'object' && !Array.isArray(v);
+const str = (v: unknown, fallback: string) => (typeof v === 'string' ? v : fallback);
+const bool = (v: unknown, fallback: boolean) => (typeof v === 'boolean' ? v : fallback);
+
+/**
+ * Settings from the database (or this browser's cache), field by field: anything missing or of the
+ * wrong type falls back to the code default, so a bad value can never break a page.
+ */
+export const sanitizeSettings = (rows: Array<{ key: string; value: unknown }>): SiteSettings => {
+  const raw: Record<string, Raw> = {};
+  for (const r of rows) if (r && typeof r.key === 'string' && isObj(r.value)) raw[r.key] = r.value;
+  const d = DEFAULT_SETTINGS;
+  const a = raw.announcement ?? {};
+  const link = 'link' in a ? (typeof a.link === 'string' && isSiteLink(a.link) ? a.link : null) : d.announcement.link;
+  const w = raw.support_whatsapp ?? {};
+  const p = raw.payments_enabled ?? {};
+  const m = raw.maintenance ?? {};
+  const digits = str(w.number, d.support_whatsapp.number).replace(/\D/g, '');
+  return {
+    announcement: { enabled: bool(a.enabled, d.announcement.enabled), text: str(a.text, d.announcement.text), link },
+    support_whatsapp: { number: digits },
+    payments_enabled: { enabled: bool(p.enabled, d.payments_enabled.enabled), message: str(p.message, d.payments_enabled.message) },
+    maintenance: { enabled: bool(m.enabled, d.maintenance.enabled), text: str(m.text, d.maintenance.text) },
+  };
+};
+
 const apply = (rows: Array<{ key: string; value: unknown }>) => {
-  const next = { ...DEFAULT_SETTINGS } as Record<string, unknown>;
-  for (const r of rows) if (r.key in next && r.value && typeof r.value === 'object') next[r.key] = { ...(next[r.key] as object), ...(r.value as object) };
-  settings = next as SiteSettings;
+  settings = sanitizeSettings(rows);
   listeners.forEach((l) => l());
 };
 

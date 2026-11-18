@@ -1,6 +1,8 @@
 import { AlertTriangle, Loader2 } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { useBlocker } from 'react-router-dom';
 import { cn } from '@/lib/cn';
+import { supabase } from '@/lib/supabase';
 
 export const inputCls =
   'h-11 w-full rounded-button border border-border bg-surface px-3 text-[15px] outline-none focus:border-primary disabled:bg-background disabled:text-muted';
@@ -61,3 +63,46 @@ export const formatDateTime = (iso: string | null | undefined) =>
 
 export const formatDate = (iso: string | null | undefined) =>
   iso ? new Date(iso).toLocaleDateString('en-IN', { dateStyle: 'medium', timeZone: 'Asia/Kolkata' }) : '—';
+
+/** Order money is stored in paise (like Razorpay); template prices are whole rupees. */
+export const formatPaise = (paise: number) =>
+  new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(paise / 100);
+
+/**
+ * Asks before leaving a page with unsaved edits: in-app links (React Router) and closing or
+ * reloading the tab.
+ */
+export const useUnsavedGuard = (dirty: boolean) => {
+  const blocker = useBlocker(({ currentLocation, nextLocation }) => dirty && currentLocation.pathname !== nextLocation.pathname);
+  useEffect(() => {
+    if (blocker.state !== 'blocked') return;
+    if (window.confirm('You have unsaved changes. Leave without saving?')) blocker.proceed();
+    else blocker.reset();
+  }, [blocker]);
+  useEffect(() => {
+    if (!dirty) return;
+    const onBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener('beforeunload', onBeforeUnload);
+    return () => window.removeEventListener('beforeunload', onBeforeUnload);
+  }, [dirty]);
+};
+
+/** Emails for admin ids (audit log, notes, history). Unknown ids show a short id. */
+export const usePeople = (ids: Array<string | null | undefined>) => {
+  const [people, setPeople] = useState<Record<string, string>>({});
+  const key = [...new Set(ids.filter((x): x is string => Boolean(x)))].sort().join(',');
+  useEffect(() => {
+    if (!key) return;
+    let active = true;
+    void supabase!.rpc('admin_people', { p_ids: key.split(',') }).then(({ data }) => {
+      if (!active || !data) return;
+      setPeople((prev) => ({ ...prev, ...Object.fromEntries((data as Array<{ user_id: string; email: string }>).map((p) => [p.user_id, p.email])) }));
+    });
+    return () => {
+      active = false;
+    };
+  }, [key]);
+  return (id: string | null | undefined) => (id ? (people[id] ?? id.slice(0, 8)) : 'system');
+};

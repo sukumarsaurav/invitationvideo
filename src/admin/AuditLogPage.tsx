@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/Button';
 import { cn } from '@/lib/cn';
 import { supabase } from '@/lib/supabase';
-import { Badge, ErrorNote, formatDateTime, Loading, PageHeader } from './ui';
+import { Badge, ErrorNote, formatDateTime, Loading, PageHeader, usePeople } from './ui';
 
 type Entry = {
   id: number;
@@ -21,12 +22,16 @@ const TYPES = [
   { value: 'templates', label: 'Templates' },
   { value: 'site_settings', label: 'Settings' },
   { value: 'admins', label: 'Admins' },
+  { value: 'customer', label: 'Customer views' },
 ];
+
+const ENTITY_LABEL: Record<string, string> = { templates: 'template', site_settings: 'setting', admins: 'admin', customer: 'customer' };
 
 const IGNORED = new Set(['updated_at', 'updated_by']);
 const PAGE = 50;
 
 const describe = (e: Entry) => {
+  if (e.action === 'view') return 'Opened customer details';
   if (e.action === 'insert') return 'Created';
   if (e.action === 'delete') return 'Deleted';
   if (!e.before || !e.after) return e.action;
@@ -51,10 +56,12 @@ export const AuditLogPage = () => {
   const [page, setPage] = useState(0);
   const [rows, setRows] = useState<Entry[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const personOf = usePeople((rows ?? []).map((e) => e.actor_id));
 
   useEffect(() => {
     let active = true;
     setRows(null);
+    setError(null);
     let q = supabase!.from('audit_log').select('*').order('created_at', { ascending: false }).range(page * PAGE, page * PAGE + PAGE - 1);
     if (type) q = q.eq('entity_type', type);
     q.then(({ data, error: e }) => {
@@ -69,7 +76,7 @@ export const AuditLogPage = () => {
 
   return (
     <>
-      <PageHeader title="Audit log" description="Who changed what, and when. Append-only: no one can edit or delete an entry." />
+      <PageHeader title="Audit log" description="Who changed what, who opened which customer, and when. Append-only: no one can edit or delete an entry." />
       <div className="mb-4 flex flex-wrap gap-2" role="radiogroup" aria-label="Filter">
         {TYPES.map((t) => (
           <button
@@ -112,14 +119,20 @@ export const AuditLogPage = () => {
                   <tr key={e.id} className="border-b border-border align-top last:border-0">
                     <td className="whitespace-nowrap px-4 py-3">{formatDateTime(e.created_at)}</td>
                     <td className="px-4 py-3">
-                      <Badge>{e.entity_type}</Badge>
-                      <span className="block pt-1 text-xs text-muted">{e.entity_id}</span>
+                      <Badge>{ENTITY_LABEL[e.entity_type] ?? e.entity_type}</Badge>
+                      {e.entity_type === 'customer' && e.entity_id ? (
+                        <Link to={`/admin/customers/${e.entity_id}`} className="block pt-1 text-xs text-primary hover:underline">
+                          {e.entity_id.slice(0, 8)}
+                        </Link>
+                      ) : (
+                        <span className="block pt-1 text-xs text-muted">{e.entity_id}</span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       {describe(e)}
                       {e.reason ? <span className="block text-xs text-muted">Reason: {e.reason}</span> : null}
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs text-muted">{e.actor_id ? e.actor_id.slice(0, 8) : 'system'}</td>
+                    <td className="px-4 py-3 text-xs text-muted">{personOf(e.actor_id)}</td>
                   </tr>
                 ))}
               </tbody>

@@ -186,7 +186,7 @@ const moveLocalDraftsToAccount = async (userId: string) => {
 let switchToken = 0;
 
 /** Called by AuthProvider whenever the signed-in user changes. */
-export const setDraftUser = async (userId: string | null) => {
+export const setDraftUser = async (userId: string | null, options: { moveLocal?: boolean } = {}) => {
   const token = ++switchToken;
   if (!supabase || userId === null) {
     setState({ userId: null, drafts: readLocal(), loaded: true, error: null });
@@ -195,7 +195,8 @@ export const setDraftUser = async (userId: string | null) => {
   setState({ userId, drafts: [], loaded: false, error: null });
   let error: string | null = null;
   try {
-    await moveLocalDraftsToAccount(userId);
+    // Off for admin sign-ins: drafts made on a shared device are not the admin's own.
+    if (options.moveLocal !== false) await moveLocalDraftsToAccount(userId);
   } catch (e) {
     error = `Couldn't move this device's drafts to your account: ${e instanceof Error ? e.message : e}`;
   }

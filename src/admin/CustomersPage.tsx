@@ -3,18 +3,18 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Button } from '@/components/Button';
 import { useToast } from '@/components/Toast';
-import { formatInr } from '@/lib/cn';
 import { supabase } from '@/lib/supabase';
 import { normaliseData, videoTitle } from '@/templates/data';
 import { getTemplate } from '@/templates/registry';
 import { atLeast, useAdmin } from './access';
-import { Badge, Card, ErrorNote, formatDate, formatDateTime, inputCls, Loading, PageHeader } from './ui';
+import { Badge, Card, ErrorNote, formatDate, formatDateTime, formatPaise, inputCls, Loading, PageHeader, usePeople } from './ui';
 
 type CustomerRow = {
   user_id: string;
   email: string;
   created_at: string;
   last_sign_in_at: string | null;
+  is_admin: boolean;
   videos: number;
   paid_orders: number;
   lifetime_spend: number;
@@ -28,6 +28,8 @@ const PAGE = 50;
 // ---------------------------------------------------------------------------
 
 export const CustomersPage = () => {
+  const { role } = useAdmin();
+  const canOpen = atLeast(role, 'support');
   const [params, setParams] = useSearchParams();
   const q = params.get('q') ?? '';
   const page = Math.max(0, Number(params.get('page') ?? 0) || 0);
@@ -38,6 +40,7 @@ export const CustomersPage = () => {
   useEffect(() => {
     let active = true;
     setRows(null);
+    setError(null);
     supabase!.rpc('admin_customers', { p_search: q, p_limit: PAGE, p_offset: page * PAGE }).then(({ data, error: e }) => {
       if (!active) return;
       if (e) setError(e.message);
@@ -52,7 +55,14 @@ export const CustomersPage = () => {
 
   return (
     <>
-      <PageHeader title="Customers" description="Search by email, account id, order id or Razorpay payment id. Guests are not listed: their drafts stay in their own browser." />
+      <PageHeader
+        title="Customers"
+        description={
+          canOpen
+            ? 'Search by any part of an email, an account id, order id or Razorpay payment id. Guests are not listed: their drafts stay in their own browser.'
+            : 'Your role sees masked emails. Search by a whole email address, an account id, order id or Razorpay payment id.'
+        }
+      />
       <form
         className="mb-4 flex max-w-xl gap-2"
         onSubmit={(e) => {
@@ -89,15 +99,20 @@ export const CustomersPage = () => {
                   {rows.map((r) => (
                     <tr key={r.user_id} className="border-b border-border last:border-0 hover:bg-background">
                       <td className="px-4 py-3">
-                        <Link to={`/admin/customers/${r.user_id}`} className="font-semibold text-primary hover:underline">
-                          {r.email}
-                        </Link>
+                        {canOpen ? (
+                          <Link to={`/admin/customers/${r.user_id}`} className="font-semibold text-primary hover:underline">
+                            {r.email}
+                          </Link>
+                        ) : (
+                          <span className="font-semibold">{r.email}</span>
+                        )}
+                        {r.is_admin ? <span className="ml-2"><Badge>admin</Badge></span> : null}
                       </td>
                       <td className="px-4 py-3">{formatDate(r.created_at)}</td>
                       <td className="px-4 py-3">{formatDateTime(r.last_sign_in_at)}</td>
                       <td className="px-4 py-3 text-right tabular-nums">{r.videos}</td>
                       <td className="px-4 py-3 text-right tabular-nums">{r.paid_orders}</td>
-                      <td className="px-4 py-3 text-right tabular-nums">{formatInr(r.lifetime_spend)}</td>
+                      <td className="px-4 py-3 text-right tabular-nums">{formatPaise(r.lifetime_spend)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -144,6 +159,9 @@ export const CustomerPage = () => {
   const [slugById, setSlugById] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState('');
+  const [adding, setAdding] = useState(false);
+  const [partError, setPartError] = useState<string | null>(null);
+  const authorOf = usePeople(notes.map((n) => n.created_by));
 
   const load = useCallback(async () => {
     const { data, error: e } = await supabase!.rpc('admin_customer', { p_user_id: id });
@@ -157,6 +175,9 @@ export const CustomerPage = () => {
       supabase!.from('customer_notes').select('id, body, created_by, created_at').eq('user_id', id!).order('created_at', { ascending: false }),
       supabase!.from('templates').select('id, slug'),
     ]);
+    // Show what loaded, and say what didn't, rather than an empty list that looks like "none".
+    const failed = [v.error && 'videos', o.error && 'orders', n.error && 'notes', t.error && 'templates'].filter(Boolean);
+    setPartError(failed.length ? `Couldn't load ${failed.join(', ')}. Reload to try again.` : null);
     setVideos((v.data ?? []) as Video[]);
     setOrders((o.data ?? []) as Order[]);
     setNotes((n.data ?? []) as Note[]);
@@ -169,8 +190,10 @@ export const CustomerPage = () => {
 
   const addNote = async () => {
     const body = note.trim();
-    if (!body) return;
+    if (!body || adding) return;
+    setAdding(true);
     const { error: e } = await supabase!.from('customer_notes').insert({ user_id: id, body });
+    setAdding(false);
     if (e) return toast({ message: e.message, tone: 'error' });
     setNote('');
     toast({ message: 'Note added.' });
@@ -191,6 +214,11 @@ export const CustomerPage = () => {
         <ArrowLeft className="size-4" /> Customers
       </Link>
       <PageHeader title={account.email} description={`Signed up ${formatDate(account.created_at)} · last sign-in ${formatDateTime(account.last_sign_in_at)} · ${account.provider}`} />
+      {partError ? (
+        <div className="mb-4">
+          <ErrorNote message={partError} />
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <div className="space-y-6">
@@ -219,8 +247,8 @@ export const CustomerPage = () => {
               {orders.map((o) => (
                 <li key={o.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-sm">
                   <span>
-                    <span className="font-semibold tabular-nums">{formatInr(o.amount)}</span>
-                    {o.refunded_amount ? <span className="ml-2 text-xs text-error">refunded {formatInr(o.refunded_amount)}</span> : null}
+                    <span className="font-semibold tabular-nums">{formatPaise(o.amount)}</span>
+                    {o.refunded_amount ? <span className="ml-2 text-xs text-error">refunded {formatPaise(o.refunded_amount)}</span> : null}
                     <span className="block text-xs text-muted">
                       {formatDateTime(o.paid_at ?? o.created_at)} · {o.source}
                       {o.razorpay_payment_id ? ` · ${o.razorpay_payment_id}` : ''}
@@ -237,8 +265,8 @@ export const CustomerPage = () => {
           {canSupport ? (
             <div className="mb-4">
               <textarea className={`${inputCls} h-20 py-2`} value={note} onChange={(e) => setNote(e.target.value)} maxLength={4000} placeholder="What happened, what you did" aria-label="New note" />
-              <Button className="mt-2 w-full" variant="outline" onClick={addNote} disabled={!note.trim()}>
-                Add note
+              <Button className="mt-2 w-full" variant="outline" onClick={addNote} disabled={!note.trim() || adding}>
+                {adding ? 'Adding…' : 'Add note'}
               </Button>
             </div>
           ) : null}
@@ -247,7 +275,9 @@ export const CustomerPage = () => {
             {notes.map((n) => (
               <li key={n.id} className="border-b border-border pb-3 last:border-0">
                 <p className="whitespace-pre-wrap">{n.body}</p>
-                <span className="text-xs text-muted">{formatDateTime(n.created_at)}</span>
+                <span className="text-xs text-muted">
+                  {authorOf(n.created_by)} · {formatDateTime(n.created_at)}
+                </span>
               </li>
             ))}
           </ul>

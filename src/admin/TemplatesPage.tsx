@@ -1,4 +1,4 @@
-import { ArrowLeft, Eye, EyeOff, Save } from 'lucide-react';
+import { ArrowLeft, Eye, EyeOff, RefreshCw, Save } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Button } from '@/components/Button';
@@ -11,7 +11,11 @@ import { makeExampleData } from '@/templates/data';
 import { ALL_TEMPLATES, TAGS } from '@/templates/registry';
 import type { TemplateMeta } from '@/templates/types';
 import { atLeast, useAdmin } from './access';
-import { Badge, Card, ErrorNote, Field, formatDateTime, inputCls, Loading, PageHeader } from './ui';
+import { Badge, Card, ErrorNote, Field, formatDateTime, inputCls, Loading, PageHeader, usePeople, useUnsavedGuard } from './ui';
+
+/** Same range as the database's templates_price_range check. */
+const PRICE_MIN = 1;
+const PRICE_MAX = 50000;
 
 type Row = {
   id: string;
@@ -26,8 +30,6 @@ type Row = {
   tags: string[];
   seo_title: string | null;
   seo_description: string | null;
-  preview_url: string | null;
-  thumbnail_url: string | null;
   code_hash: string | null;
   category_id: string;
   published_at: string | null;
@@ -36,7 +38,7 @@ type Row = {
 };
 
 const COLUMNS =
-  'id, slug, name, description, price_inr, is_active, is_trending, popularity, sort_order, tags, seo_title, seo_description, preview_url, thumbnail_url, code_hash, category_id, published_at, updated_at, categories(slug, name)';
+  'id, slug, name, description, price_inr, is_active, is_trending, popularity, sort_order, tags, seo_title, seo_description, code_hash, category_id, published_at, updated_at, categories(slug, name)';
 
 /** Same hash as scripts/generate-seed.ts, so the panel can tell when the code changed after the last seed. */
 const codeHash = async (t: TemplateMeta) => {
@@ -57,6 +59,44 @@ const useCodeHashes = () => {
 const status = (r: Row) => (r.is_active ? { label: 'Published', tone: 'good' as const } : r.published_at ? { label: 'Hidden', tone: 'neutral' as const } : { label: 'Draft', tone: 'warn' as const });
 
 // ---------------------------------------------------------------------------
+// Store rebuild status
+// ---------------------------------------------------------------------------
+
+type Rebuild = { configured: boolean; requested_at: string | null; sent_at: string | null };
+
+/**
+ * Prices and copy reach the app straight away, but the pre-rendered pages, sitemap and the price
+ * in Google's structured data are built at deploy time. Edits queue a rebuild (database job, about
+ * 2 minutes after the last change) when a Vercel deploy hook is set up; this says where it stands.
+ */
+export const StoreRebuildNote = ({ refreshKey = 0 }: { refreshKey?: number }) => {
+  const [r, setR] = useState<Rebuild | null>(null);
+  useEffect(() => {
+    let active = true;
+    void supabase!.rpc('admin_store_rebuild').then(({ data }) => {
+      if (active && data) setR(data as Rebuild);
+    });
+    return () => {
+      active = false;
+    };
+  }, [refreshKey]);
+  if (!r) return null;
+  const pending = r.requested_at && (!r.sent_at || r.sent_at < r.requested_at);
+  const text = !r.configured
+    ? 'Search-engine pages, the sitemap and the price Google shows update on the next deploy. Automatic rebuilds are not set up (README: “Store rebuilds”).'
+    : pending
+      ? `Store pages rebuild about 2 minutes after the last change (changed ${formatDateTime(r.requested_at)}).`
+      : r.sent_at
+        ? `Store pages are up to date: last rebuild started ${formatDateTime(r.sent_at)}.`
+        : 'Store pages rebuild automatically about 2 minutes after a change.';
+  return (
+    <p className={cn('mb-4 flex items-start gap-2 rounded-button p-3 text-sm', !r.configured || pending ? 'bg-accent/15' : 'bg-background text-muted')}>
+      <RefreshCw className="mt-0.5 size-4 shrink-0" /> {text}
+    </p>
+  );
+};
+
+// ---------------------------------------------------------------------------
 // List
 // ---------------------------------------------------------------------------
 
@@ -71,11 +111,9 @@ export const TemplatesPage = () => {
       const { data, error: e } = await supabase!.from('templates').select(COLUMNS).order('sort_order').order('name');
       if (e) return setError(e.message);
       setRows(data as unknown as Row[]);
-      const to = new Date();
-      const from = new Date(to.getTime() - 30 * 864e5);
-      const { data: dash } = await supabase!.rpc('admin_dashboard', { p_from: from.toISOString(), p_to: to.toISOString() });
-      const byTemplate = ((dash as { by_template?: Array<{ slug: string; drafts: number }> } | null)?.by_template ?? []).map((x) => [x.slug, x.drafts]);
-      setDrafts(Object.fromEntries(byTemplate));
+      const from = new Date(Date.now() - 30 * 864e5);
+      const { data: counts } = await supabase!.rpc('admin_template_drafts', { p_from: from.toISOString() });
+      setDrafts(Object.fromEntries(((counts ?? []) as Array<{ slug: string; drafts: number }>).map((x) => [x.slug, x.drafts])));
     })();
   }, []);
 
@@ -85,6 +123,7 @@ export const TemplatesPage = () => {
   return (
     <>
       <PageHeader title="Templates" description="Price, copy, tags, order and visibility. The animation itself lives in the code; new templates arrive here as drafts after a deploy and seed." />
+      <StoreRebuildNote />
       {error ? <ErrorNote message={error} /> : null}
       {!rows && !error ? <Loading /> : null}
       {notSeeded.length ? (
@@ -147,8 +186,6 @@ export const TemplatesPage = () => {
 type Form = Pick<Row, 'name' | 'description' | 'price_inr' | 'is_trending' | 'popularity' | 'sort_order' | 'tags' | 'category_id'> & {
   seo_title: string;
   seo_description: string;
-  preview_url: string;
-  thumbnail_url: string;
 };
 
 const toForm = (r: Row): Form => ({
@@ -162,8 +199,6 @@ const toForm = (r: Row): Form => ({
   category_id: r.category_id,
   seo_title: r.seo_title ?? '',
   seo_description: r.seo_description ?? '',
-  preview_url: r.preview_url ?? '',
-  thumbnail_url: r.thumbnail_url ?? '',
 });
 
 type AuditEntry = { id: number; actor_id: string | null; action: string; before: Record<string, unknown> | null; after: Record<string, unknown> | null; created_at: string };
@@ -185,6 +220,13 @@ export const TemplateEditorPage = () => {
   const [history, setHistory] = useState<AuditEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  // Someone else saved this template after it was loaded here: their version, not yet applied.
+  const [conflict, setConflict] = useState<Row | null>(null);
+  const [rebuildKey, setRebuildKey] = useState(0);
+  const authorOf = usePeople(history.map((h) => h.actor_id));
+
+  const dirty = Boolean(row && form && JSON.stringify(form) !== JSON.stringify(toForm(row)));
+  useUnsavedGuard(dirty);
 
   const load = useCallback(async () => {
     const [{ data, error: e }, { data: cats }] = await Promise.all([
@@ -215,28 +257,47 @@ export const TemplateEditorPage = () => {
   if (error) return <ErrorNote message={error} />;
   if (!row || !form) return <Loading />;
 
-  const dirty = JSON.stringify(form) !== JSON.stringify(toForm(row));
   const set = <K extends keyof Form>(key: K, value: Form[K]) => setForm({ ...form, [key]: value });
 
   const write = async (patch: Partial<Row>, message: string) => {
     setSaving(true);
-    const { data, error: e } = await supabase!.from('templates').update(patch).eq('id', row.id).select(COLUMNS).maybeSingle();
-    setSaving(false);
-    // RLS turns a forbidden update into "no row", not an error.
-    if (e || !data) {
-      toast({ message: e?.message ?? 'Not saved: your role cannot edit templates.', tone: 'error' });
+    // Only if nobody else saved since this page loaded it (updated_at unchanged).
+    const { data, error: e } = await supabase!.from('templates').update(patch).eq('id', row.id).eq('updated_at', row.updated_at).select(COLUMNS).maybeSingle();
+    if (e) {
+      setSaving(false);
+      toast({ message: e.message.includes('templates_price_range') ? `Price must be between ₹${PRICE_MIN} and ₹${PRICE_MAX.toLocaleString('en-IN')}.` : e.message, tone: 'error' });
       return;
     }
+    if (!data) {
+      // No row updated: either someone saved in between, or this role can't edit (RLS hides it).
+      const { data: latest } = await supabase!.from('templates').select(COLUMNS).eq('id', row.id).maybeSingle();
+      setSaving(false);
+      const fresh = latest as unknown as Row | null;
+      if (fresh && fresh.updated_at !== row.updated_at) setConflict(fresh);
+      else toast({ message: 'Not saved: your role cannot edit templates.', tone: 'error' });
+      return;
+    }
+    setSaving(false);
     setRow(data as unknown as Row);
     setForm(toForm(data as unknown as Row));
+    setConflict(null);
     toast({ message });
+    setRebuildKey((k) => k + 1);
     void loadCatalogue(true);
     void load();
   };
 
   const save = () => {
     if (!form.name.trim()) return toast({ message: 'Name is required.', tone: 'error' });
-    if (!Number.isInteger(form.price_inr) || form.price_inr < 1) return toast({ message: 'Price must be a whole number of rupees, at least ₹1.', tone: 'error' });
+    if (!Number.isInteger(form.price_inr) || form.price_inr < PRICE_MIN || form.price_inr > PRICE_MAX) {
+      return toast({ message: `Price must be a whole number of rupees, ₹${PRICE_MIN} to ₹${PRICE_MAX.toLocaleString('en-IN')}.`, tone: 'error' });
+    }
+    if (form.price_inr !== row.price_inr) {
+      const ratio = form.price_inr / row.price_inr;
+      const big = ratio >= 2 || ratio <= 0.5 ? `\n\nThat is ${ratio >= 1 ? `${ratio.toFixed(1)}× the current price` : `${Math.round((1 - ratio) * 100)}% off`}: check for a typo.` : '';
+      const where = row.is_active ? 'New orders pay the new price straight away.' : 'It applies when the template is published.';
+      if (!window.confirm(`Change the price of "${row.name}" from ${formatInr(row.price_inr)} to ${formatInr(form.price_inr)}? ${where}${big}`)) return;
+    }
     void write(
       {
         ...form,
@@ -244,8 +305,6 @@ export const TemplateEditorPage = () => {
         description: form.description.trim(),
         seo_title: form.seo_title.trim() || null,
         seo_description: form.seo_description.trim() || null,
-        preview_url: form.preview_url.trim() || null,
-        thumbnail_url: form.thumbnail_url.trim() || null,
       },
       'Saved. The store shows it on the next page load.',
     );
@@ -287,6 +346,25 @@ export const TemplateEditorPage = () => {
           </>
         }
       />
+      {conflict ? (
+        <div className="mb-4 rounded-button border border-error/30 bg-error/10 p-3 text-sm">
+          <p className="font-semibold text-error">Not saved: someone else saved this template at {formatDateTime(conflict.updated_at)} while you were editing.</p>
+          <p className="mt-1">Your edits are still on screen. Load their version (your edits are discarded), then make your change again.</p>
+          <Button
+            variant="outline"
+            className="mt-2 min-h-10"
+            onClick={() => {
+              setRow(conflict);
+              setForm(toForm(conflict));
+              setConflict(null);
+              void load();
+            }}
+          >
+            Load their version
+          </Button>
+        </div>
+      ) : null}
+      <StoreRebuildNote refreshKey={rebuildKey} />
       {!def ? (
         <div className="mb-4">
           <ErrorNote message="This template is in the database but not in the deployed code. Keep it hidden until the code is deployed." />
@@ -315,8 +393,8 @@ export const TemplateEditorPage = () => {
                   <textarea className={cn(inputCls, 'h-24 py-2')} value={form.description} onChange={(e) => set('description', e.target.value)} maxLength={400} />
                 </Field>
               </div>
-              <Field label="Price (₹)" hint="New orders only; paid orders keep the price they paid.">
-                <input className={inputCls} type="number" min={1} step={1} inputMode="numeric" value={form.price_inr} onChange={(e) => set('price_inr', Math.round(Number(e.target.value)))} />
+              <Field label="Price (₹)" hint={`₹${PRICE_MIN}–₹${PRICE_MAX.toLocaleString('en-IN')}. New orders only; paid orders keep the price they paid.`}>
+                <input className={inputCls} type="number" min={PRICE_MIN} max={PRICE_MAX} step={1} inputMode="numeric" value={form.price_inr} onChange={(e) => set('price_inr', Math.round(Number(e.target.value)))} />
               </Field>
               <Field label="Store order" hint="Lower comes first.">
                 <input className={inputCls} type="number" step={1} value={form.sort_order} onChange={(e) => set('sort_order', Math.round(Number(e.target.value)))} />
@@ -358,20 +436,9 @@ export const TemplateEditorPage = () => {
               <Field label="SEO description" hint={`Empty uses the description plus the price. Aim for under 160 characters (${form.seo_description.length}).`}>
                 <textarea className={cn(inputCls, 'h-20 py-2')} value={form.seo_description} onChange={(e) => set('seo_description', e.target.value)} maxLength={300} />
               </Field>
-              <p className="text-xs text-muted">Pre-rendered search pages and the sitemap pick up changes on the next deploy.</p>
             </fieldset>
           </Card>
 
-          <Card title="Preview media">
-            <fieldset disabled={!canEdit} className="grid gap-4 md:grid-cols-2">
-              <Field label="Preview video URL" hint="Optional. Uploads arrive with file storage (Phase 3).">
-                <input className={inputCls} type="url" value={form.preview_url} onChange={(e) => set('preview_url', e.target.value)} placeholder="https://" />
-              </Field>
-              <Field label="Thumbnail URL" hint="Optional. Cards fall back to a live frame.">
-                <input className={inputCls} type="url" value={form.thumbnail_url} onChange={(e) => set('thumbnail_url', e.target.value)} placeholder="https://" />
-              </Field>
-            </fieldset>
-          </Card>
         </div>
 
         <div className="space-y-6">
@@ -402,7 +469,9 @@ export const TemplateEditorPage = () => {
                   const fields = changedFields(h);
                   return (
                     <li key={h.id} className="border-b border-border pb-2 last:border-0">
-                      <span className="block text-xs text-muted">{formatDateTime(h.created_at)}</span>
+                      <span className="block text-xs text-muted">
+                        {formatDateTime(h.created_at)} · {authorOf(h.actor_id)}
+                      </span>
                       {h.action === 'update' ? (fields.length ? `Changed ${fields.join(', ')}` : 'Saved with no visible change') : h.action === 'insert' ? 'Added by the seed' : h.action}
                     </li>
                   );

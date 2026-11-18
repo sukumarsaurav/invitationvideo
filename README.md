@@ -116,14 +116,33 @@ plan, with later phases (payments, refunds, coupons, analytics), is the Admin Pa
 
 - **Access:** a row in `invites.admins` (role `viewer`, `support`, `manager` or `owner`) plus two-step
   sign-in with an authenticator app, set up on first visit. The database checks both on every query
-  (`invites.is_admin()`), so the panel's own screens are not the security boundary.
+  (`invites.is_admin()`), so the panel's own screens are not the security boundary. `/admin` has its
+  own sign-in (emailed code, existing accounts only). Sessions end after 30 minutes without activity.
 - **Make someone an admin** (SQL editor; Phase 4 adds a screen for this):
   `insert into invites.admins (user_id, role) select id, 'owner' from auth.users where email = 'you@example.com';`
   They must have signed in to the store once first.
-- **Store changes** reach visitors on their next page load. Pre-rendered search pages and the sitemap
-  read the published catalogue at build time, so they update on the next deploy.
-- **Locally:** two-step sign-in is enabled in `supabase/config.toml`; sign-in codes arrive in Mailpit
-  (http://localhost:54324).
+- **Backup authenticator:** Supabase has no recovery codes. Each admin should add a second
+  authenticator (another phone, or a password manager) under `/admin/security`, and there should be
+  at least two owners.
+- **Locked out** (every authenticator lost): in the Supabase dashboard, Authentication → Users → the
+  admin → delete their MFA factors (or SQL editor:
+  `delete from auth.mfa_factors where user_id = (select id from auth.users where email = 'you@example.com');`).
+  The next visit to `/admin` sets up a new authenticator. Check the audit log afterwards.
+- **Store rebuilds:** prices and copy reach the app on the next page load. Pre-rendered search pages,
+  the sitemap and the price in Google's structured data are built at deploy time, so a database job
+  (`invites.fire_store_rebuild`, every minute) calls a Vercel deploy hook about 2 minutes after the
+  last store-visible template edit. To turn it on, create a deploy hook (Vercel → Project → Settings →
+  Git → Deploy Hooks, branch `main`) and store its URL in Vault (SQL editor):
+  `select vault.create_secret('https://api.vercel.com/v1/integrations/deploy/…', 'vercel_deploy_hook');`
+  The Templates page shows whether it is set up and when the last rebuild started.
+- **Money:** order amounts (`invites.orders.amount`, refunds, fees) are in paise, as Razorpay sends
+  them; template prices (`price_inr`) are whole rupees.
+- **Security headers** (`vercel.json`): the site can't be framed, and scripts load only from the
+  site itself, which limits what an injected script could do with a signed-in admin's session.
+  `npm run preview:static` serves `dist/` with the same headers.
+- **While developing:** `localhost` uses the same hosted project, so the same admin accounts and
+  authenticator codes work there, and every change is live. Add `http://localhost:5173/**` to the
+  project's redirect URLs (Authentication → URL Configuration) if sign-in links should return to it.
 
 Template rules for the browser renderer: use text, SVG, linear gradients, transforms, shadows and
 images. Avoid radial gradients. Load fonts through `src/templates/shared/fonts.ts`.
