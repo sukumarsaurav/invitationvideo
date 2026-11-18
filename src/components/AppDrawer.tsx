@@ -1,11 +1,12 @@
-import { CircleHelp, Languages, LogIn, LogOut, MessageCircle, X } from 'lucide-react';
+import { ChevronDown, CircleHelp, Languages, LayoutGrid, LogIn, LogOut, MessageCircle, X } from 'lucide-react';
 import { useSupportWhatsapp } from '@/lib/siteSettings';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Drawer } from 'vaul';
 import { useAuth } from '@/lib/auth';
 import { cn } from '@/lib/cn';
 import { useI18n } from '@/lib/i18n';
-import { categoriesWithTemplates } from '@/templates/registry';
+import { TEMPLATES } from '@/templates/registry';
+import { groupIsActive, linkCount, MENU } from './menu';
 
 type Props = { open: boolean; onOpenChange: (open: boolean) => void };
 
@@ -16,6 +17,7 @@ const linkCls = 'flex min-h-11 w-full items-center gap-3 rounded-[10px] px-3 tex
 /** Left side drawer: account, categories, language, help. Swipe left to close. */
 export const AppDrawer = ({ open, onOpenChange }: Props) => {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { user, signOut } = useAuth();
   const { t, lang, setLang } = useI18n();
   const SUPPORT_WHATSAPP = useSupportWhatsapp();
@@ -50,10 +52,44 @@ export const AppDrawer = ({ open, onOpenChange }: Props) => {
 
           <div className="flex-1 overflow-y-auto p-2">
             <p className="px-3 pb-1 pt-3 text-xs font-semibold uppercase tracking-wider text-muted">{t('Categories')}</p>
-            {categoriesWithTemplates().map((c) => (
-              <button key={c.slug} onClick={() => go(`/invitations/${c.slug}`)} className={cn(linkCls, 'justify-between')}>
-                {t(c.name)} <span className="text-sm text-muted">{c.count}</span>
-              </button>
+            <button onClick={() => go('/templates')} className={cn(linkCls, 'justify-between')}>
+              <span className="flex items-center gap-3">
+                <LayoutGrid className="size-5 text-muted" /> {t('All templates')}
+              </span>
+              <span className="text-sm text-muted">{TEMPLATES.length}</span>
+            </button>
+            {/* The same groups as the desktop header dropdowns; the group you're in starts open. */}
+            {MENU.map((group) => (
+              <details key={group.label} open={groupIsActive(group, pathname)} className="group">
+                <summary className={cn(linkCls, 'cursor-pointer list-none justify-between font-semibold [&::-webkit-details-marker]:hidden')}>
+                  {t(group.label)}
+                  <ChevronDown className="size-4 text-muted transition-transform group-open:rotate-180" />
+                </summary>
+                <ul className="mb-1 ml-3 border-l border-border pl-2">
+                  {group.links
+                    // All templates and Help have their own rows in this drawer.
+                    .filter((link) => link.to !== '/templates' && link.to !== '/help')
+                    .map((link) => {
+                      const count = linkCount(link);
+                      return (
+                        <li key={link.to}>
+                          <button
+                            onClick={() => go(link.to)}
+                            aria-current={pathname === link.to ? 'page' : undefined}
+                            className={cn(linkCls, 'min-h-10 justify-between text-[14px]', pathname === link.to && 'font-semibold text-primary')}
+                          >
+                            {t(link.label)}
+                            {count === 0 ? (
+                              <span className="rounded-full bg-background px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-muted">{t('Soon')}</span>
+                            ) : count !== null ? (
+                              <span className="text-sm text-muted">{count}</span>
+                            ) : null}
+                          </button>
+                        </li>
+                      );
+                    })}
+                </ul>
+              </details>
             ))}
 
             <div className="my-2 border-t border-border" />

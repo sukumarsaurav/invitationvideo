@@ -1,24 +1,32 @@
-import { Menu, Search } from 'lucide-react';
+import { Clapperboard, Menu, Search, UserRound } from 'lucide-react';
 import { useCatalogue } from '@/lib/catalogue';
 import { useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useMatches } from 'react-router-dom';
 import type { RouteHandle } from '@/App';
 import { cn } from '@/lib/cn';
 import { useI18n } from '@/lib/i18n';
+import { useAuth } from '@/lib/auth';
 import { useSiteSettings } from '@/lib/siteSettings';
 import { AnnouncementBar } from './AnnouncementBar';
 import { AppDrawer } from './AppDrawer';
 import { BottomTabBar } from './BottomTabBar';
+import { DesktopNav } from './DesktopNav';
 import { Footer } from './Footer';
+import { HeaderSearch } from './HeaderSearch';
 import { LanguageSwitch } from './LanguageSwitch';
 import { Logo } from './Logo';
 import { NAV_ITEMS } from './nav';
 
 const iconBtn = 'grid size-11 place-items-center rounded-full text-primary transition-transform active:scale-95';
 
-/** Offer strip + header (logo left, search and menu right) + page + footer + phone tab bar. */
+/**
+ * Offer strip + header + page + footer + phone tab bar.
+ * Header: big screens (lg+) get category dropdowns, a search box, My Videos and Sign in;
+ * tablets keep the four main links; phones and tablets open the categories in the side drawer.
+ */
 export const AppShell = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { user } = useAuth();
   const { pathname } = useLocation();
   const { t } = useI18n();
   useCatalogue(); // re-render when the admin-published catalogue arrives
@@ -45,9 +53,12 @@ export const AppShell = () => {
           detail && 'max-md:hidden',
         )}
       >
-        <div className="flex h-16 w-full items-center gap-2 pl-4 pr-2 md:gap-6 md:px-6 lg:px-10 2xl:px-16">
+        <div className="mx-auto flex h-16 w-full max-w-[1440px] items-center gap-2 pl-4 pr-2 md:gap-6 md:px-6 lg:h-[72px] lg:gap-4 lg:px-10 2xl:px-12">
           <Logo />
-          <nav aria-label={t('Main')} className="ml-auto hidden items-center gap-1 md:flex">
+          {/* Big screens: categories as dropdowns. */}
+          <DesktopNav className="hidden flex-1 justify-center lg:flex" />
+          {/* Tablets: the four main destinations (phones use the bottom tabs). */}
+          <nav aria-label={t('Main')} className="ml-auto hidden items-center gap-1 md:flex lg:hidden">
             {NAV_ITEMS.map(({ to, label, end }) => (
               <NavLink
                 key={to}
@@ -61,22 +72,45 @@ export const AppShell = () => {
               </NavLink>
             ))}
           </nav>
-          <div className="ml-auto flex items-center md:ml-0 md:gap-2">
-            <Link to="/templates?search=1" className={iconBtn} aria-label={t('Search templates')}>
+          <div className="ml-auto flex items-center md:ml-0 md:gap-2 lg:gap-1">
+            <HeaderSearch className="hidden w-56 lg:block xl:w-72" />
+            <Link to="/templates?search=1" className={cn(iconBtn, 'lg:hidden')} aria-label={t('Search templates')}>
               <Search className="size-6" />
             </Link>
-            {/* Desktop: language switch in the header (tablets: footer; phones: menu). */}
-            <LanguageSwitch className="max-lg:hidden" />
-            {/* The menu is for phones and tablets; desktop has the full nav above. */}
-            <button onClick={() => setDrawerOpen(true)} className={cn(iconBtn, 'md:hidden')} aria-label={t('Open menu')}>
+            <NavLink
+              to="/my-videos"
+              className={({ isActive }) =>
+                cn('hidden min-h-11 items-center gap-2 whitespace-nowrap rounded-full px-3 text-sm font-medium lg:flex', isActive ? 'text-primary' : 'text-ink hover:text-primary')
+              }
+            >
+              <Clapperboard className="size-5" strokeWidth={1.8} /> <span className="max-xl:sr-only">{t('My Videos')}</span>
+            </NavLink>
+            {user ? (
+              <Link
+                to="/account"
+                aria-label={t('Account')}
+                title={user.email ?? undefined}
+                className="hidden size-10 place-items-center rounded-full bg-primary/10 font-semibold uppercase text-primary lg:grid"
+              >
+                {(user.email ?? '?').charAt(0)}
+              </Link>
+            ) : (
+              <Link to="/account" className="hidden min-h-11 items-center gap-2 whitespace-nowrap rounded-full px-3 text-sm font-semibold text-ink hover:text-primary lg:flex">
+                <UserRound className="size-5" strokeWidth={1.8} /> {t('Sign in')}
+              </Link>
+            )}
+            {/* Very wide screens: language switch in the header (smaller screens: footer and menu). */}
+            <LanguageSwitch className="max-xl:hidden" />
+            {/* Phones and tablets: the side drawer holds the categories. */}
+            <button onClick={() => setDrawerOpen(true)} className={cn(iconBtn, 'lg:hidden')} aria-label={t('Open menu')}>
               <Menu className="size-7" />
             </button>
           </div>
         </div>
       </header>
 
-      {/* Full width. Pages add px-4 / md:px-6; these extra gutters line content up with the header on big screens. */}
-      <main key={pathname} className="page-in w-full flex-1 lg:px-4 2xl:px-10">
+      {/* Centred, up to 1440px like the header. Pages add px-4 / md:px-6; these gutters line content up with the header. */}
+      <main key={pathname} className="page-in mx-auto w-full max-w-[1440px] flex-1 lg:px-4 2xl:px-6">
         <Outlet />
       </main>
 
