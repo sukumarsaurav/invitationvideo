@@ -144,7 +144,7 @@ export const CustomersPage = () => {
 
 type Account = { user_id: string; email: string; created_at: string; last_sign_in_at: string | null; provider: string };
 type Video = { id: string; template_id: string; data: unknown; status: string; share_token: string | null; created_at: string; updated_at: string };
-type Order = { id: string; amount: number; status: string; source: string; created_at: string; paid_at: string | null; razorpay_payment_id: string | null; refunded_amount: number };
+type Order = { id: string; amount: number; status: string; source: string; created_at: string; paid_at: string | null; razorpay_payment_id: string | null; refunded_amount: number; coupon_code: string | null };
 type Note = { id: string; body: string; created_by: string; created_at: string };
 
 export const CustomerPage = () => {
@@ -171,7 +171,7 @@ export const CustomerPage = () => {
     setAccount(acc);
     const [v, o, n, t] = await Promise.all([
       supabase!.from('user_videos').select('id, template_id, data, status, share_token, created_at, updated_at').eq('user_id', id!).order('updated_at', { ascending: false }),
-      supabase!.from('orders').select('id, amount, status, source, created_at, paid_at, razorpay_payment_id, refunded_amount').eq('user_id', id!).order('created_at', { ascending: false }),
+      supabase!.from('orders').select('id, amount, status, source, created_at, paid_at, razorpay_payment_id, refunded_amount, coupon_code').eq('user_id', id!).order('created_at', { ascending: false }),
       supabase!.from('customer_notes').select('id, body, created_by, created_at').eq('user_id', id!).order('created_at', { ascending: false }),
       supabase!.from('templates').select('id, slug'),
     ]);
@@ -252,6 +252,7 @@ export const CustomerPage = () => {
                     <span className="block text-xs text-muted">
                       {formatDateTime(o.paid_at ?? o.created_at)} · {o.source}
                       {o.razorpay_payment_id ? ` · ${o.razorpay_payment_id}` : ''}
+                      {o.coupon_code ? ` · coupon ${o.coupon_code}` : ''}
                     </span>
                   </span>
                   <Badge tone={o.status === 'paid' ? 'good' : o.status === 'failed' ? 'bad' : 'neutral'}>{o.status}</Badge>

@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowLeft, CheckCircle2, ChevronDown, Clock, Download, Loader2, Lock, Send, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, ChevronDown, Clock, Download, Loader2, Lock, Send, ShieldCheck, TicketPercent, X } from 'lucide-react';
 import { useSeo } from '@/lib/seo';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
@@ -7,6 +7,7 @@ import { INSTALL_MOMENT } from '@/components/InstallPrompt';
 import { useToast } from '@/components/Toast';
 import { cn, formatInr } from '@/lib/cn';
 import { fetchServerStatus, markRendered, payTest, useDraft } from '@/lib/drafts';
+import { CheckoutClosed, fetchQuote, payWithRazorpay, type Quote } from '@/lib/payments';
 import { tap } from '@/lib/haptics';
 import { useI18n } from '@/lib/i18n';
 import {
@@ -61,6 +62,12 @@ export const RenderPage = () => {
   const [payError, setPayError] = useState<string | null>(null);
   // Set by a successful payment: the video starts as soon as the device check is done.
   const [autoStart, setAutoStart] = useState(false);
+  const [quote, setQuote] = useState<Quote | null>(null);
+  const [couponOpen, setCouponOpen] = useState(false);
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [applying, setApplying] = useState(false);
   useSeo({ title: 'Download HD video', description: '', path: '/render', noindex: true });
 
   // Who may make the HD file: everyone when FREE_HD, otherwise only videos the server marks as paid.
@@ -78,6 +85,23 @@ export const RenderPage = () => {
       active = false;
     };
   }, [loading, draftKey]);
+
+  // A locked video: fetch the server's price (the catalogue price may be out of date). A video that
+  // turns out to be paid (e.g. the webhook settled it) opens straight away.
+  useEffect(() => {
+    if (access !== 'locked' || !draftKey) return;
+    let active = true;
+    fetchQuote(draftKey)
+      .then((q) => {
+        if (!active) return;
+        if (q.status !== 'draft') setAccess('allowed');
+        else setQuote(q);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [access, draftKey]);
 
   useEffect(() => {
     if (!def) return;
@@ -144,22 +168,55 @@ export const RenderPage = () => {
 
   startRef.current = start;
 
-  // Test payment (until Razorpay): the server records the order and marks the video paid.
+  // Razorpay, or the test button while test payments are on. Either way the server prices the
+  // video (with the coupon) and marks it paid; then the HD video starts on its own.
   const pay = async () => {
     setPaying(true);
     setPayError(null);
     tap(15);
     try {
-      await payTest(draft.id);
+      if (settings.test_payments.enabled) await payTest(draft.id, appliedCoupon ?? undefined);
+      else await payWithRazorpay(draft.id, appliedCoupon ?? undefined);
       setAccess('allowed');
       setAutoStart(true);
       toast({ message: t('Payment received. Making your HD video…') });
     } catch (e) {
-      setPayError(e instanceof Error ? e.message : String(e));
+      if (!(e instanceof CheckoutClosed)) setPayError(e instanceof Error ? e.message : String(e));
     } finally {
       setPaying(false);
     }
   };
+
+  const applyCoupon = async () => {
+    const code = couponInput.trim().toUpperCase();
+    if (!code) return;
+    setApplying(true);
+    setCouponError(null);
+    try {
+      const q = await fetchQuote(draft.id, code);
+      if (q.coupon_error) setCouponError(t(q.coupon_error));
+      else {
+        setQuote(q);
+        setAppliedCoupon(code);
+        tap();
+      }
+    } catch (e) {
+      setCouponError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput('');
+    void fetchQuote(draft.id).then(setQuote).catch(() => {});
+  };
+
+  // The price shown and charged: the server's quote once it arrives (paise), the catalogue price until then.
+  const listPrice = quote ? quote.list_price / 100 : def.priceInr;
+  const discount = quote && appliedCoupon ? quote.discount / 100 : 0;
+  const total = quote ? quote.amount / 100 : def.priceInr;
 
   const shareFile = async (file: File) => {
     try {
@@ -267,28 +324,85 @@ export const RenderPage = () => {
               </div>
             ) : null}
 
-            {access === 'locked' && settings.payments_enabled.enabled && settings.test_payments.enabled ? (
+            {access === 'locked' && settings.payments_enabled.enabled ? (
               <div className="mt-4 rounded-card border border-accent/60 p-4">
                 <p className="font-semibold">{t('Pay to download')}</p>
                 <dl className="mt-3 space-y-2 text-sm">
                   <div className="flex justify-between gap-3">
                     <dt className="text-muted">{t(def.name)}</dt>
-                    <dd className="tabular-nums">{formatInr(def.priceInr)}</dd>
+                    <dd className="tabular-nums">{formatInr(listPrice)}</dd>
                   </div>
                   <div className="flex justify-between gap-3">
                     <dt className="text-muted">{t('HD video, no watermark')}</dt>
                     <dd className="text-success">{t('Included')}</dd>
                   </div>
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between gap-3">
+                      <dt className="flex min-w-0 items-center gap-1.5 text-success">
+                        <TicketPercent className="size-4 shrink-0" />
+                        <span className="truncate">{t('Coupon {code}', { code: appliedCoupon })}</span>
+                        <button onClick={removeCoupon} className="grid size-8 shrink-0 place-items-center rounded-full text-muted" aria-label={t('Remove coupon')}>
+                          <X className="size-4" />
+                        </button>
+                      </dt>
+                      <dd className="tabular-nums text-success">−{formatInr(discount)}</dd>
+                    </div>
+                  ) : null}
                   <div className="flex justify-between gap-3 border-t border-border pt-2 font-semibold">
                     <dt>{t('Total')}</dt>
-                    <dd className="tabular-nums">{formatInr(def.priceInr)}</dd>
+                    <dd className="tabular-nums">{total === 0 ? t('Free') : formatInr(total)}</dd>
                   </div>
                 </dl>
-                <Button className="mt-4 w-full" onClick={pay} disabled={paying || !check?.ok}>
-                  {paying ? <Loader2 className="size-4 animate-spin" /> : <Lock className="size-4" />} {t('Pay {price}', { price: formatInr(def.priceInr) })}
+
+                {appliedCoupon ? null : couponOpen ? (
+                  <form
+                    className="mt-3"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      void applyCoupon();
+                    }}
+                  >
+                    <div className="flex gap-2">
+                      <input
+                        value={couponInput}
+                        onChange={(e) => {
+                          setCouponInput(e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ''));
+                          setCouponError(null);
+                        }}
+                        maxLength={24}
+                        placeholder={t('Coupon code')}
+                        aria-label={t('Coupon code')}
+                        aria-invalid={couponError ? true : undefined}
+                        aria-describedby={couponError ? 'coupon-error' : undefined}
+                        autoCapitalize="characters"
+                        autoComplete="off"
+                        enterKeyHint="go"
+                        autoFocus
+                        className="h-11 min-w-0 flex-1 rounded-button border border-border bg-surface px-3 uppercase tracking-wider outline-none focus:border-primary"
+                      />
+                      <Button type="submit" variant="outline" disabled={applying || !couponInput.trim()} className="px-4">
+                        {applying ? <Loader2 className="size-4 animate-spin" /> : null} {t('Apply')}
+                      </Button>
+                    </div>
+                    {couponError ? (
+                      <p id="coupon-error" role="alert" className="mt-1.5 text-sm text-error">
+                        {couponError}
+                      </p>
+                    ) : null}
+                  </form>
+                ) : (
+                  <button onClick={() => setCouponOpen(true)} className="mt-2 flex min-h-11 items-center gap-1.5 text-sm font-semibold text-primary">
+                    <TicketPercent className="size-4" /> {t('Have a coupon code?')}
+                  </button>
+                )}
+
+                <Button className="mt-3 w-full" onClick={pay} disabled={paying || !check?.ok}>
+                  {paying ? <Loader2 className="size-4 animate-spin" /> : <Lock className="size-4" />}{' '}
+                  {total === 0 ? t('Get my HD video') : t('Pay {price}', { price: formatInr(total) })}
                 </Button>
                 <p className="mt-2 flex items-center justify-center gap-1 text-xs text-muted">
-                  <ShieldCheck className="size-3.5" /> {t('Test payment: no money is charged.')}
+                  <ShieldCheck className="size-3.5" />{' '}
+                  {settings.test_payments.enabled ? t('Test payment: no money is charged.') : t('Secure payment by Razorpay: UPI, cards, netbanking, wallets.')}
                 </p>
                 <p className="mt-1 text-center text-xs text-muted">{t('Pay once. Download again any time from My Videos.')}</p>
                 {payError ? (
@@ -301,13 +415,9 @@ export const RenderPage = () => {
               <>
                 <div className="mt-4 rounded-button bg-accent/15 p-3 text-sm">
                   <p className="flex items-center gap-2 font-semibold">
-                    <Lock className="size-4" /> {settings.payments_enabled.enabled ? t('HD download opens soon') : t('Payments are paused')}
+                    <Lock className="size-4" /> {t('Payments are paused')}
                   </p>
-                  <p className="mt-1">
-                    {settings.payments_enabled.enabled
-                      ? t('Online payment is being set up. Until then, share the free preview with family from the editor.')
-                      : settings.payments_enabled.message || t('Please try again in a few minutes. Your video is saved.')}
-                  </p>
+                  <p className="mt-1">{settings.payments_enabled.message || t('Please try again in a few minutes. Your video is saved.')}</p>
                 </div>
                 <Link
                   to={`/editor/${draft.id}`}

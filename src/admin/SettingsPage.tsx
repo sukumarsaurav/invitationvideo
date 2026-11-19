@@ -223,7 +223,7 @@ export const SettingsPage = () => {
         </SettingCard>
         <SettingCard
           title="Test payments"
-          description="Until Razorpay is integrated: Download asks for payment and a test “Pay” button completes it. Each test payment records a paid order (source “test”), so the dashboard and customer pages fill in. Turn this off before launch."
+          description="On: Download’s “Pay” button completes a test payment that charges nothing and records a paid order (source “test”), with coupons applied as usual. Off: customers pay with Razorpay. Turn this off once the Razorpay keys are set up (see README → Payments)."
           settingKey="test_payments"
           row={rows.test_payments}
           {...common}

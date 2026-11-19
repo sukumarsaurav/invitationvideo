@@ -1,4 +1,4 @@
-import { ArrowLeft, KeyRound, LayoutDashboard, Loader2, LogOut, ScrollText, Settings, ShieldAlert, Shapes, Users } from 'lucide-react';
+import { ArrowLeft, KeyRound, LayoutDashboard, Loader2, LogOut, ScrollText, Settings, ShieldAlert, Shapes, TicketPercent, Users } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, NavLink, Route, Routes } from 'react-router-dom';
 import { useAuth } from '@/lib/auth';
@@ -8,6 +8,7 @@ import { supabase } from '@/lib/supabase';
 import { AdminContext, atLeast, ROLE_LABEL, type AdminRole } from './access';
 import { AdminSignIn } from './AdminSignIn';
 import { AuditLogPage } from './AuditLogPage';
+import { CouponsPage } from './CouponsPage';
 import { CustomerPage, CustomersPage } from './CustomersPage';
 import { DashboardPage } from './DashboardPage';
 import { IDLE_MINUTES, idleExpired, markActive, useIdleSignOut } from './idle';
@@ -22,6 +23,7 @@ const NAV: Array<{ to: string; label: string; icon: typeof LayoutDashboard; end?
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true, min: 'viewer' },
   { to: '/admin/templates', label: 'Templates', icon: Shapes, min: 'viewer' },
   { to: '/admin/customers', label: 'Customers', icon: Users, min: 'viewer' },
+  { to: '/admin/coupons', label: 'Coupons', icon: TicketPercent, min: 'viewer' },
   { to: '/admin/settings', label: 'Settings', icon: Settings, min: 'viewer' },
   { to: '/admin/audit', label: 'Audit log', icon: ScrollText, min: 'manager' },
   { to: '/admin/security', label: 'Security', icon: KeyRound, min: 'viewer' },
@@ -169,6 +171,7 @@ export const AdminApp = () => {
             <Route path="templates/:slug" element={<TemplateEditorPage />} />
             <Route path="customers" element={<CustomersPage />} />
             <Route path="customers/:id" element={<CustomerPage />} />
+            <Route path="coupons" element={<CouponsPage />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="security" element={<SecurityPage />} />
             {atLeast(role, 'manager') ? <Route path="audit" element={<AuditLogPage />} /> : null}

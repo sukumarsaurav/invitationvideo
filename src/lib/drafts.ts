@@ -305,13 +305,18 @@ export const fetchServerStatus = async (id: string): Promise<DraftStatus | null>
 
 /**
  * Pays for a signed-in video with the test button: the server records a test order at the
- * template's price and marks the video paid (exactly what the Razorpay webhook will do).
+ * template's price (less any coupon) and marks the video paid, as a real payment does.
  * Throws with a customer-readable message on failure.
  */
-export const payTest = async (id: string): Promise<void> => {
+export const payTest = async (id: string, coupon?: string): Promise<void> => {
   if (!state.userId || !supabase) throw new Error('Sign in to pay.');
-  const { error } = await supabase.rpc('pay_test', { p_video_id: id });
+  const { error } = await supabase.rpc('pay_test', { p_video_id: id, p_code: coupon || null });
   if (error) throw new Error(error.message);
+  markPaid(id);
+};
+
+/** The server says this video is paid: show it so in My Videos straight away. */
+export const markPaid = (id: string) => {
   const draft = state.drafts.find((d) => d.id === id);
   if (draft) upsertInState({ ...draft, status: 'paid' });
 };

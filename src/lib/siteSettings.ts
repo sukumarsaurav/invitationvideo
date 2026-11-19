@@ -12,7 +12,7 @@ export type SiteSettings = {
   support_whatsapp: { number: string };
   payments_enabled: { enabled: boolean; message: string };
   maintenance: { enabled: boolean; text: string };
-  /** Download asks for payment and a test "Pay" button completes it (until Razorpay is integrated). */
+  /** "Pay" completes a test payment that charges nothing; off, customers pay with Razorpay. */
   test_payments: { enabled: boolean };
 };
 

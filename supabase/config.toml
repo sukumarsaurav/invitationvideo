@@ -385,3 +385,14 @@ s3_region = "env(S3_REGION)"
 s3_access_key = "env(S3_ACCESS_KEY)"
 # Configures AWS_SECRET_ACCESS_KEY for S3 bucket
 s3_secret_key = "env(S3_SECRET_KEY)"
+
+# Payment functions check the customer's session themselves (Supabase Auth) and the webhook checks
+# Razorpay's signature, so the gateway's JWT check is off. See supabase/functions/_shared/razorpay.ts.
+[functions.razorpay-order]
+verify_jwt = false
+
+[functions.razorpay-verify]
+verify_jwt = false
+
+[functions.razorpay-webhook]
+verify_jwt = false

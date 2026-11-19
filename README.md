@@ -14,7 +14,7 @@ preview, and download an HD MP4 that is rendered **in their own browser** with R
 | HD render | `@remotion/web-renderer` (`renderMediaOnWeb`) in the customer's browser |
 | Database / auth | Supabase, `invites` schema (`supabase/migrations`) |
 | Files | Cloudflare R2 (MinIO locally) — not wired yet |
-| Payments | Razorpay — not wired yet |
+| Payments | Razorpay Checkout + Supabase Edge Functions (`supabase/functions/razorpay-*`), coupons |
 
 ## Run locally
 
@@ -63,8 +63,7 @@ They override `.env.production`.
 | `VITE_FREE_HD` | leave unset. `true` lets anyone download HD without paying (e.g. a launch promotion) |
 
 **HD downloads need payment in production.** `/render/:id` only makes the HD file when the server says the
-video is `paid` or `rendered` (status is set only by the service role). Until Razorpay is wired, production
-shows "HD download opens soon". Development always allows it. Because the video is rendered in the
+video is `paid` or `rendered` (status is set only by the server, after a payment). See **Payments** below. Because the video is rendered in the
 customer's browser, this stops ordinary customers, not someone editing the app's JavaScript.
 
 All are public (`VITE_` values are built into the browser bundle). Never put the Supabase
@@ -110,10 +109,49 @@ service-role/secret key or a Razorpay secret in a `VITE_` variable.
    `/admin/templates`, set its price and copy, check the preview, and press **Publish**. Re-running the
    seed later only updates code-owned fields (size, fps, duration, schema), never admin edits.
 
+## Payments
+
+Customers pay on `/render/:id` (the download page). The database prices every video
+(`invites._quote`: the template's current price, less any coupon), so the browser never decides
+what is charged. Two modes, switched by the admin setting **Test payments**:
+
+- **On** (the starting state): "Pay" completes a test payment that charges nothing and records a paid
+  order with source `test`. Coupons work as usual. Good for trying the whole flow.
+- **Off:** customers pay with Razorpay Checkout (UPI, cards, netbanking, wallets):
+  1. `razorpay-order` (edge function) records a pending order and opens a Razorpay order for the amount.
+  2. Checkout takes the payment in a Razorpay window.
+  3. `razorpay-verify` checks Razorpay's signature, captures the payment if needed and marks the video paid.
+  4. `razorpay-webhook` does the same from Razorpay's side, for customers who close the page too early.
+  Settling is idempotent, so steps 3 and 4 can both happen. A 100% coupon skips Razorpay (source `coupon`).
+
+**Set up Razorpay** (test mode first: test keys start with `rzp_test_` and charge nothing):
+
+1. Apply the migrations (`npm run db:push`) **before** deploying the app: the download page calls
+   `quote_price` and the new `pay_test(video, coupon)`.
+2. Add the secrets (Razorpay Dashboard → Account & Settings → API Keys). Run this yourself so the
+   secret never passes through anything else:
+   `supabase secrets set RAZORPAY_KEY_ID=rzp_test_… RAZORPAY_KEY_SECRET=… RAZORPAY_WEBHOOK_SECRET=…`
+   (the webhook secret is any long random string; use the same one in step 4).
+3. Deploy the functions: `supabase functions deploy razorpay-order razorpay-verify razorpay-webhook`
+   (`supabase/config.toml` turns off the gateway's JWT check for them; each checks the session or the
+   webhook signature itself).
+4. Razorpay Dashboard → Webhooks → Add: URL
+   `https://clhfqyyqjwcrgpfrplyy.supabase.co/functions/v1/razorpay-webhook`, the secret from step 2,
+   events `payment.captured` and `order.paid`.
+5. `/admin/settings` → turn **Test payments** off. Pay for a video with a
+   [Razorpay test card or UPI id](https://razorpay.com/docs/payments/payments/test-card-details/), and
+   check the order in `/admin/customers`.
+6. To go live, repeat steps 2 and 4 with live keys (`rzp_live_…`) from an activated Razorpay account.
+
+**Coupons** (`/admin/coupons`, managers): percent or rupees off, an optional limit on paid uses and
+an optional last day. Customers type the code under "Have a coupon code?". Coupons can't be deleted
+because orders refer to them: switch one off instead. Discounts are whole rupees, and a discount never
+leaves less than ₹1 to pay (Razorpay's minimum) unless it is 100%.
+
 ## Admin panel
 
 `/admin` manages templates (price, copy, tags, order, publish/hide), customers (search, videos,
-orders, support notes), site settings (announcement, support WhatsApp, maintenance notice) and shows
+orders, support notes), coupons, site settings (announcement, support WhatsApp, maintenance notice, test payments) and shows
 a dashboard and an append-only audit log. It is a separate bundle that customers never download. The
 plan, with later phases (payments, refunds, coupons, analytics), is the Admin Panel Plan doc.
 
