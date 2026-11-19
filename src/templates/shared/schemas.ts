@@ -82,7 +82,7 @@ const introClip = (w: EventWording, duration = 120): ClipDef => ({
   fields: [
     ...(w.blessing !== undefined ? [keepText('blessing', 'Blessing line', w.blessing, 28, { casing: 'upper', optional: true })] : []),
     keepText('line1', 'Title', w.line1, 14),
-    keepText('line2', 'Subtitle', w.line2, 18, { casing: 'upper' }),
+    keepText('line2', 'Subtitle', w.line2, 22, { casing: 'upper' }),
   ],
 });
 

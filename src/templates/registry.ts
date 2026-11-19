@@ -1,10 +1,16 @@
 import { blushFloralWedding } from './blush-floral-wedding';
+import { calendarSaveTheDate } from './calendar-save-the-date';
 import { floralArchEngagement } from './floral-arch-engagement';
 import { ivoryMinimalEngagement } from './ivory-minimal-engagement';
+import { kalashHaldi } from './kalash-haldi';
+import { marigoldHaldi } from './marigold-haldi';
 import { pastelBirthday } from './pastel-birthday';
+import { polaroidSaveTheDate } from './polaroid-save-the-date';
 import { roseGoldRingEngagement } from './rose-gold-ring-engagement';
 import { royalWedding } from './royal-wedding';
 import { templeBellsWedding } from './temple-bells-wedding';
+import { turmericSplashHaldi } from './turmeric-splash-haldi';
+import { watercolourSaveTheDate } from './watercolour-save-the-date';
 import { byPopularity, similarTo, usedTags } from '../lib/pageMeta.ts';
 import { CATEGORIES, inCategory, MAIN_CATEGORIES } from './taxonomy';
 import type { TemplateDefinition } from './types';
@@ -19,6 +25,12 @@ export const ALL_TEMPLATES: TemplateDefinition[] = [
   roseGoldRingEngagement,
   ivoryMinimalEngagement,
   floralArchEngagement,
+  calendarSaveTheDate,
+  polaroidSaveTheDate,
+  watercolourSaveTheDate,
+  marigoldHaldi,
+  turmericSplashHaldi,
+  kalashHaldi,
   pastelBirthday,
 ];
 
