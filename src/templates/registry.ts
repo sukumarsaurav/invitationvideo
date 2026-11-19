@@ -1,25 +1,46 @@
+import { alpanaBengaliWedding } from './alpana-bengali-wedding';
+import { ashtamangalJainWedding } from './ashtamangal-jain-wedding';
+import { bandhaniRajasthaniWedding } from './bandhani-rajasthani-wedding';
 import { blushFloralWedding } from './blush-floral-wedding';
 import { bohoMehndi } from './boho-mehndi';
 import { calendarSaveTheDate } from './calendar-save-the-date';
 import { champagneReception } from './champagne-reception';
+import { choodaKaleerePunjabi } from './chooda-kaleere-punjabi';
+import { derasarJainWedding } from './derasar-jain-wedding';
 import { dholBeatsSangeet } from './dhol-beats-sangeet';
 import { discoNightSangeet } from './disco-night-sangeet';
+import { emeraldNikah } from './emerald-nikah';
 import { floralArchEngagement } from './floral-arch-engagement';
+import { gajBaraatWedding } from './gaj-baraat-wedding';
 import { gardenLightsReception } from './garden-lights-reception';
+import { gayeHoludBengali } from './gaye-holud-bengali';
+import { haladMarathi } from './halad-marathi';
+import { haveliJharokhaWedding } from './haveli-jharokha-wedding';
 import { hennaMandalaMehndi } from './henna-mandala-mehndi';
 import { ivoryMinimalEngagement } from './ivory-minimal-engagement';
+import { jaagoNightPunjabi } from './jaago-night-punjabi';
 import { kalashHaldi } from './kalash-haldi';
+import { lanternWalima } from './lantern-walima';
+import { lotusJainWedding } from './lotus-jain-wedding';
 import { marigoldHaldi } from './marigold-haldi';
 import { marqueeSangeet } from './marquee-sangeet';
 import { midnightGoldReception } from './midnight-gold-reception';
+import { mundavalyaMarathiWedding } from './mundavalya-marathi-wedding';
+import { navyVowsWedding } from './navy-vows-wedding';
+import { paithaniMarathiWedding } from './paithani-marathi-wedding';
 import { pastelBirthday } from './pastel-birthday';
 import { peacockMehndi } from './peacock-mehndi';
+import { phulkariAnandKaraj } from './phulkari-anand-karaj';
 import { polaroidSaveTheDate } from './polaroid-save-the-date';
 import { roseGoldRingEngagement } from './rose-gold-ring-engagement';
+import { roseJaaliNikah } from './rose-jaali-nikah';
+import { rosesDovesWedding } from './roses-doves-wedding';
 import { royalWedding } from './royal-wedding';
 import { templeBellsWedding } from './temple-bells-wedding';
+import { toporBengaliWedding } from './topor-bengali-wedding';
 import { turmericSplashHaldi } from './turmeric-splash-haldi';
 import { watercolourSaveTheDate } from './watercolour-save-the-date';
+import { whiteChapelWedding } from './white-chapel-wedding';
 import { byPopularity, similarTo, usedTags } from '../lib/pageMeta.ts';
 import { CATEGORIES, inCategory, MAIN_CATEGORIES } from './taxonomy';
 import type { TemplateDefinition } from './types';
@@ -49,6 +70,27 @@ export const ALL_TEMPLATES: TemplateDefinition[] = [
   midnightGoldReception,
   champagneReception,
   gardenLightsReception,
+  alpanaBengaliWedding,
+  toporBengaliWedding,
+  gayeHoludBengali,
+  whiteChapelWedding,
+  rosesDovesWedding,
+  navyVowsWedding,
+  lotusJainWedding,
+  derasarJainWedding,
+  ashtamangalJainWedding,
+  paithaniMarathiWedding,
+  mundavalyaMarathiWedding,
+  haladMarathi,
+  emeraldNikah,
+  lanternWalima,
+  roseJaaliNikah,
+  phulkariAnandKaraj,
+  jaagoNightPunjabi,
+  choodaKaleerePunjabi,
+  haveliJharokhaWedding,
+  bandhaniRajasthaniWedding,
+  gajBaraatWedding,
   pastelBirthday,
 ];
 

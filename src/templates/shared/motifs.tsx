@@ -269,3 +269,83 @@ export const lineDivider =
       </svg>
     );
   };
+
+/**
+ * Outline of an arch standing on (cx, base), `w` wide and `h` tall. 'onion' is the Mughal arch,
+ * 'pointed' a gothic church window, 'round' a plain Roman arch.
+ */
+export const archPath = (cx: number, base: number, w: number, h: number, kind: 'onion' | 'pointed' | 'round'): string => {
+  const l = cx - w / 2;
+  const r = cx + w / 2;
+  const spring = base - h + w * (kind === 'round' ? 0.5 : 0.62);
+  const top = base - h;
+  if (kind === 'round') return `M${l} ${base} V${spring} A${w / 2} ${w / 2} 0 0 1 ${r} ${spring} V${base} Z`;
+  if (kind === 'pointed')
+    return `M${l} ${base} V${spring} Q${l} ${top + w * 0.12} ${cx} ${top} Q${r} ${top + w * 0.12} ${r} ${spring} V${base} Z`;
+  return `M${l} ${base} V${spring} C${l} ${spring - w * 0.3} ${cx - w * 0.42} ${top + w * 0.3} ${cx - w * 0.08} ${top + w * 0.12} Q${cx} ${top + w * 0.06} ${cx} ${top} Q${cx} ${top + w * 0.06} ${cx + w * 0.08} ${top + w * 0.12} C${cx + w * 0.42} ${top + w * 0.3} ${r} ${spring - w * 0.3} ${r} ${spring} V${base} Z`;
+};
+
+/** Crescent moon with a small star, centred at the origin. */
+export const Crescent: React.FC<{ r: number; color: string; star?: boolean }> = ({ r, color, star = true }) => (
+  <g fill={color}>
+    <path d={`M${r * 0.2} ${-r} A${r} ${r} 0 1 0 ${r * 0.2} ${r} A${r * 0.78} ${r * 0.78} 0 1 1 ${r * 0.2} ${-r} Z`} />
+    {star ? (
+      <path
+        transform={`translate(${r * 0.55} ${-r * 0.1}) scale(${r / 90})`}
+        d="M0 -26 L7 -8 L26 -8 L11 4 L16 23 L0 12 L-16 23 L-11 4 L-26 -8 L-7 -8 Z"
+      />
+    ) : null}
+  </g>
+);
+
+/** A hanging lantern with a glowing body, drawn from its hook at the origin, `h` tall below the chain. */
+export const Lantern: React.FC<{ chain: number; h: number; color: string; glow: number }> = ({ chain, h, color, glow }) => (
+  <g>
+    <path d={`M0 0 V${chain}`} stroke={color} strokeWidth={2} />
+    <g transform={`translate(0 ${chain})`}>
+      <circle cy={h * 0.55} r={h * 0.75} fill={`rgba(255,200,110,${0.22 * glow})`} />
+      <path d={`M${-h * 0.12} 0 H${h * 0.12} L${h * 0.2} ${h * 0.12} H${-h * 0.2} Z`} fill={color} />
+      <path d={`M${-h * 0.2} ${h * 0.12} C${-h * 0.42} ${h * 0.35} ${-h * 0.42} ${h * 0.7} ${-h * 0.18} ${h * 0.88} H${h * 0.18} C${h * 0.42} ${h * 0.7} ${h * 0.42} ${h * 0.35} ${h * 0.2} ${h * 0.12} Z`} fill={`rgba(255,214,140,${0.55 + 0.4 * glow})`} stroke={color} strokeWidth={3} />
+      <path d={`M0 ${h * 0.12} V${h * 0.88} M${-h * 0.3} ${h * 0.5} H${h * 0.3}`} stroke={color} strokeWidth={2} opacity={0.7} />
+      <path d={`M${-h * 0.18} ${h * 0.88} H${h * 0.18} L0 ${h} Z`} fill={color} />
+    </g>
+  </g>
+);
+
+/** A lotus seen from the side, petals opening with `open` (0 → 1), standing on the origin. */
+export const Lotus: React.FC<{ size: number; open?: number; colors?: [string, string]; stroke?: string }> = ({
+  size,
+  open = 1,
+  colors = ['#F7C6D0', '#EE8FA6'],
+  stroke = '#B5536C',
+}) => {
+  const petal = (angle: number, len: number, fill: string) => (
+    <path
+      key={`${angle}-${len}`}
+      transform={`rotate(${angle * open})`}
+      d={`M0 0 C${len * 0.32} ${-len * 0.3} ${len * 0.26} ${-len * 0.8} 0 ${-len} C${-len * 0.26} ${-len * 0.8} ${-len * 0.32} ${-len * 0.3} 0 0 Z`}
+      fill={fill}
+      stroke={stroke}
+      strokeWidth={size / 90}
+    />
+  );
+  return (
+    <g>
+      {[-75, 75].map((a) => petal(a, size * 0.7, colors[1]))}
+      {[-50, 50].map((a) => petal(a, size * 0.85, colors[0]))}
+      {[-25, 25].map((a) => petal(a, size * 0.95, colors[1]))}
+      {petal(0, size, colors[0])}
+    </g>
+  );
+};
+
+/** A dove in flight facing right, centred at the origin; `flap` (−1 → 1) moves the wings. */
+export const Dove: React.FC<{ size: number; color?: string; flap?: number }> = ({ size, color = '#FFFFFF', flap = 0 }) => (
+  <g transform={`scale(${size / 100})`} fill={color} stroke="rgba(0,0,0,0.12)" strokeWidth={1.5}>
+    <path d={`M-10 0 C-30 ${-40 - flap * 20} -60 ${-50 - flap * 25} -70 ${-40 - flap * 30} C-50 ${-30 - flap * 10} -30 -10 -10 0 Z`} />
+    <path d="M-50 10 C-30 -6 10 -10 30 -4 C40 -10 48 -8 52 -2 L62 2 L52 4 C46 16 30 22 10 20 C-10 24 -30 22 -50 10 Z" />
+    <path d="M-50 10 L-74 4 L-70 14 L-78 22 L-52 16 Z" />
+    <path d={`M0 0 C-10 ${-30 - flap * 25} -20 ${-55 - flap * 25} -35 ${-60 - flap * 25} C-20 ${-35 - flap * 10} -10 -15 0 0 Z`} opacity={0.85} />
+    <circle cx={44} cy={-2} r={2} fill="#333" stroke="none" />
+  </g>
+);
