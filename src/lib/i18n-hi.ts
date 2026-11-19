@@ -318,6 +318,10 @@ export const HI: Record<string, string> = {
   'Line under the names': 'नामों के नीचे की लाइन',
   'Closing line': 'आख़िरी लाइन',
   'Reception date': 'रिसेप्शन की तारीख़',
+  'Engagement date': 'सगाई की तारीख़',
+  'Haldi date': 'हल्दी की तारीख़',
+  'Mehndi date': 'मेहंदी की तारीख़',
+  'Sangeet date': 'संगीत की तारीख़',
 
   // Download
   'Back to editor': 'एडिटर पर वापस',

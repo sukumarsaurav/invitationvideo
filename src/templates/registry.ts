@@ -1,10 +1,19 @@
 import { blushFloralWedding } from './blush-floral-wedding';
+import { bohoMehndi } from './boho-mehndi';
 import { calendarSaveTheDate } from './calendar-save-the-date';
+import { champagneReception } from './champagne-reception';
+import { dholBeatsSangeet } from './dhol-beats-sangeet';
+import { discoNightSangeet } from './disco-night-sangeet';
 import { floralArchEngagement } from './floral-arch-engagement';
+import { gardenLightsReception } from './garden-lights-reception';
+import { hennaMandalaMehndi } from './henna-mandala-mehndi';
 import { ivoryMinimalEngagement } from './ivory-minimal-engagement';
 import { kalashHaldi } from './kalash-haldi';
 import { marigoldHaldi } from './marigold-haldi';
+import { marqueeSangeet } from './marquee-sangeet';
+import { midnightGoldReception } from './midnight-gold-reception';
 import { pastelBirthday } from './pastel-birthday';
+import { peacockMehndi } from './peacock-mehndi';
 import { polaroidSaveTheDate } from './polaroid-save-the-date';
 import { roseGoldRingEngagement } from './rose-gold-ring-engagement';
 import { royalWedding } from './royal-wedding';
@@ -31,6 +40,15 @@ export const ALL_TEMPLATES: TemplateDefinition[] = [
   marigoldHaldi,
   turmericSplashHaldi,
   kalashHaldi,
+  hennaMandalaMehndi,
+  peacockMehndi,
+  bohoMehndi,
+  discoNightSangeet,
+  dholBeatsSangeet,
+  marqueeSangeet,
+  midnightGoldReception,
+  champagneReception,
+  gardenLightsReception,
   pastelBirthday,
 ];
 

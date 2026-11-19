@@ -21,7 +21,7 @@ export const floralArchEngagementMeta: TemplateMeta = {
       connector: '&',
       tagline: 'are getting engaged',
       event: 'Ring Ceremony',
-      invite: 'With love, we invite you to celebrate with',
+      invite: 'With love, please celebrate with',
     },
     dateLabel: 'Engagement date',
     examples: { venue: 'Green Leaf Lawns', city: 'Indore, Madhya Pradesh', time: '6:00 PM onwards' },
