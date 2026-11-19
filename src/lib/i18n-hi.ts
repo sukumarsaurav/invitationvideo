@@ -39,6 +39,10 @@ export const HI: Record<string, string> = {
   'Baby Shower': 'गोद भराई',
   'Griha Pravesh': 'गृह प्रवेश',
   'Save the Date': 'सेव द डेट',
+  Haldi: 'हल्दी',
+  Mehndi: 'मेहंदी',
+  Sangeet: 'संगीत',
+  Reception: 'रिसेप्शन',
   '{category} invitations': '{category} निमंत्रण',
 
   // Landing page
@@ -135,6 +139,10 @@ export const HI: Record<string, string> = {
   Traditional: 'पारंपरिक',
   Royal: 'शाही',
   'Maroon & gold': 'मरून और सुनहरा',
+  'South Indian wedding': 'दक्षिण भारतीय शादी',
+  Floral: 'फूलों वाला',
+  Modern: 'मॉडर्न',
+  Party: 'पार्टी',
   'With photo': 'फ़ोटो के साथ',
   'Kids birthday': 'बच्चों का जन्मदिन',
   Pastel: 'पेस्टल',
@@ -289,6 +297,16 @@ export const HI: Record<string, string> = {
   'Opening line': 'शुरुआती लाइन',
   Caption: 'कैप्शन',
   Heading: 'हेडिंग',
+  "Groom's name (optional)": 'दूल्हे का नाम (वैकल्पिक)',
+  'Event date': 'कार्यक्रम की तारीख़',
+  'Hosted by (family names)': 'आयोजक (परिवार के नाम)',
+  'Dress code (optional)': 'ड्रेस कोड (वैकल्पिक)',
+  'Day of the month': 'तारीख़ (दिन)',
+  Month: 'महीना',
+  Year: 'साल',
+  'Line under the names': 'नामों के नीचे की लाइन',
+  'Closing line': 'आख़िरी लाइन',
+  'Reception date': 'रिसेप्शन की तारीख़',
 
   // Download
   'Back to editor': 'एडिटर पर वापस',

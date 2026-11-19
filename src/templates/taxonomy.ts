@@ -24,11 +24,15 @@ export type Category = {
 export const CATEGORIES: Category[] = [
   { slug: 'wedding', name: 'Wedding', subLabel: 'Wedding ceremony', blurb: 'Personalised wedding invitation videos with your names, date, venue and photo, ready to share on WhatsApp.' },
   { slug: 'engagement', name: 'Engagement', parent: 'wedding', blurb: 'Engagement and ring ceremony invitation videos you can personalise in minutes.' },
+  { slug: 'save-the-date', name: 'Save the Date', parent: 'wedding', blurb: 'Save the date videos to tell family and friends early.' },
+  { slug: 'haldi', name: 'Haldi', parent: 'wedding', blurb: 'Haldi ceremony invitation videos in sunny yellows, with marigolds, your names and the muhurat.' },
+  { slug: 'mehndi', name: 'Mehndi', parent: 'wedding', blurb: 'Mehndi night invitation videos with henna patterns, your names, date and venue.' },
+  { slug: 'sangeet', name: 'Sangeet', parent: 'wedding', blurb: 'Sangeet and cocktail night invitation videos with music, lights and dance-floor energy.' },
+  { slug: 'reception', name: 'Reception', parent: 'wedding', blurb: 'Wedding reception invitation videos, elegant and ready to share on WhatsApp.' },
   { slug: 'birthday', name: 'Birthday', blurb: 'Birthday invitation videos for kids and adults, with photo, party details and a free preview.' },
   { slug: 'anniversary', name: 'Anniversary', blurb: 'Anniversary celebration invitation videos for every milestone year.' },
   { slug: 'baby-shower', name: 'Baby Shower', blurb: 'Baby shower and godh bharai invitation videos, personalised and ready to send.' },
   { slug: 'griha-pravesh', name: 'Griha Pravesh', blurb: 'Griha pravesh and housewarming invitation videos with your new address and muhurat.' },
-  { slug: 'save-the-date', name: 'Save the Date', parent: 'wedding', blurb: 'Save the date videos to tell family and friends early.' },
 ];
 
 /**
@@ -47,6 +51,10 @@ export const TAGS: Tag[] = [
   { slug: 'with-photo', group: 'feature', name: 'With photo', title: 'Invitation videos with photo', blurb: 'Designs with a photo slot for the couple, the birthday star or the family.' },
   { slug: 'kids-birthday', group: 'style', name: 'Kids birthday', title: 'Kids birthday invitation videos', blurb: 'Fun, colourful birthday invitation videos for children, with balloons and a photo.' },
   { slug: 'pastel', group: 'style', name: 'Pastel', title: 'Pastel invitation videos', blurb: 'Soft pastel colours for light, cheerful invitations.' },
+  { slug: 'south-indian-wedding', group: 'community', name: 'South Indian wedding', title: 'South Indian wedding invitation videos', blurb: 'Temple-inspired wedding invitation videos with gold, bells and kolam details for Tamil, Telugu, Kannada and Malayali weddings.' },
+  { slug: 'floral', group: 'style', name: 'Floral', title: 'Floral invitation videos', blurb: 'Invitation videos framed with flowers, petals and leaves.' },
+  { slug: 'modern', group: 'style', name: 'Modern', title: 'Modern invitation videos', blurb: 'Clean, minimal designs with simple type and lots of space.' },
+  { slug: 'party', group: 'style', name: 'Party', title: 'Party invitation videos', blurb: 'Bright, high-energy designs with lights, music and confetti for sangeet and cocktail nights.' },
   { slug: 'whatsapp-invite', group: 'feature', name: 'WhatsApp invite', title: 'WhatsApp invitation videos', blurb: 'Vertical 1080 × 1920 videos made to look great when shared on WhatsApp and Instagram stories.' },
 ];
 

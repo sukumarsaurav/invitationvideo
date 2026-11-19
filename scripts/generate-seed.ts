@@ -8,16 +8,10 @@ import { createHash } from 'node:crypto';
 import { writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { TEMPLATE_METAS } from '../src/templates/metas.ts';
+import { CATEGORIES as TAXONOMY } from '../src/templates/taxonomy.ts';
 
-const CATEGORIES = [
-  ['wedding', 'Wedding'],
-  ['engagement', 'Engagement'],
-  ['birthday', 'Birthday'],
-  ['anniversary', 'Anniversary'],
-  ['baby-shower', 'Baby Shower'],
-  ['griha-pravesh', 'Griha Pravesh'],
-  ['save-the-date', 'Save the Date'],
-] as const;
+// Order here only seeds new rows; existing category names and order are admin-owned.
+const CATEGORIES = TAXONOMY.map((c) => [c.slug, c.name] as const);
 
 const TEMPLATES = TEMPLATE_METAS;
 

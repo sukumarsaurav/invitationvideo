@@ -1,5 +1,10 @@
+import { blushFloralWedding } from './blush-floral-wedding';
+import { floralArchEngagement } from './floral-arch-engagement';
+import { ivoryMinimalEngagement } from './ivory-minimal-engagement';
 import { pastelBirthday } from './pastel-birthday';
+import { roseGoldRingEngagement } from './rose-gold-ring-engagement';
 import { royalWedding } from './royal-wedding';
+import { templeBellsWedding } from './temple-bells-wedding';
 import { byPopularity, similarTo, usedTags } from '../lib/pageMeta.ts';
 import { CATEGORIES, inCategory, MAIN_CATEGORIES } from './taxonomy';
 import type { TemplateDefinition } from './types';
@@ -7,7 +12,15 @@ import type { TemplateDefinition } from './types';
 export { CATEGORIES, TAGS, getCategory, getTag, SITE_URL } from './taxonomy';
 
 /** Every template in the code, published or not: existing drafts and paid videos always render. */
-export const ALL_TEMPLATES: TemplateDefinition[] = [royalWedding, pastelBirthday];
+export const ALL_TEMPLATES: TemplateDefinition[] = [
+  royalWedding,
+  blushFloralWedding,
+  templeBellsWedding,
+  roseGoldRingEngagement,
+  ivoryMinimalEngagement,
+  floralArchEngagement,
+  pastelBirthday,
+];
 
 /**
  * Templates customers can find in the store, in store order. Starts as every code template and is
