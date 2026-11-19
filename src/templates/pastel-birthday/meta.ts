@@ -5,6 +5,7 @@ export const pastelBirthdayMeta: TemplateMeta = {
   slug: 'pastel-balloon-birthday',
   name: 'Pastel Balloon Birthday',
   category: 'birthday',
+  music: 'party-pop',
   description: 'Light, playful birthday invitation with floating balloons and a round photo.',
   priceInr: 299,
   fps: 30,

@@ -1,6 +1,6 @@
 import { Thumbnail } from '@remotion/player';
 import { useCatalogue } from '@/lib/catalogue';
-import { ArrowLeft, ChevronRight, Clock, Film, Image, Pencil } from 'lucide-react';
+import { ArrowLeft, ChevronRight, Clock, Film, Image, Music, Pencil } from 'lucide-react';
 import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/Button';
@@ -85,6 +85,7 @@ export const TemplateDetailPage = () => {
             {photoSlots > 0 ? (
               <li className="flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5"><Image className="size-4 text-primary" /> {t('{n} photo', { n: photoSlots })}</li>
             ) : null}
+            <li className="flex items-center gap-1.5 rounded-full bg-surface px-3 py-1.5"><Music className="size-4 text-primary" /> {t('Music included')}</li>
           </ul>
 
           <section className="mt-5 rounded-card border border-border bg-surface p-4">

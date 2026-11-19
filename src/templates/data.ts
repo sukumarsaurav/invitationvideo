@@ -1,3 +1,4 @@
+import { defaultTrackFor, getTrack } from './music';
 import type { Casing, ClipDef, ClipValues, Field, TemplateMeta, TextField, VideoData } from './types';
 
 export const applyCasing = (value: string, casing: Casing | undefined): string => {
@@ -25,6 +26,7 @@ export const makeDefaultData = (def: TemplateMeta): VideoData => ({
       { included: true, values: Object.fromEntries(clip.fields.map((f) => [f.key, initialValue(f)])) },
     ]),
   ),
+  music: defaultTrackFor(def),
 });
 
 /** Data with every example drawn in, used for catalogue thumbnails and template previews. */
@@ -46,6 +48,8 @@ export const normaliseData = (def: TemplateMeta, data: SavedData | null | undefi
   const base = makeDefaultData(def);
   if (!data) return base;
   const savedClips = data.clips ?? {};
+  // '' is a deliberate "no music"; an unknown or missing track (older drafts, a removed track) gets the default.
+  if (data.music === '' || getTrack(data.music)) base.music = data.music as string;
   for (const f of def.schema.details) {
     let v = data.details?.[f.key];
     if (typeof v !== 'string') {

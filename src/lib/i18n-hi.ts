@@ -400,6 +400,16 @@ export const HI: Record<string, string> = {
     'वीडियो तैयार होने पर "WhatsApp पर भेजें" दबाएं और चैट चुनें। iPhone पर फ़ोटो में रखने के लिए "Save video" भी चुन सकते हैं।',
   'Can I change the video after downloading?': 'क्या डाउनलोड के बाद वीडियो बदल सकते हैं?',
   'Yes. Open it from My Videos, make your changes, and make the HD video again.': 'हां। "मेरे वीडियो" से खोलें, बदलाव करें, और HD वीडियो फिर से बनाएं।',
+  // Music
+  Music: 'म्यूज़िक',
+  'Music included': 'म्यूज़िक के साथ',
+  'More music': 'और म्यूज़िक',
+  'No music': 'बिना म्यूज़िक',
+  'Tap a track to hear it with your video.': 'किसी ट्रैक पर टैप करें, वह आपके वीडियो के साथ बजेगा।',
+  'Santoor & tabla · traditional': 'संतूर और तबला · पारंपरिक',
+  'Dhol & tumbi · festive': 'ढोल और तुंबी · उत्सव',
+  'Bells & soft chords · gentle': 'घंटियां और मधुर धुन · कोमल',
+  'Upbeat pop · fun': 'तेज़ पॉप · मस्ती',
   'Do I need an account?': 'क्या अकाउंट ज़रूरी है?',
   'Not to try it. To keep your videos safe, share a preview, or download, sign in with your email. We send a 6-digit code, no password needed.':
     'आज़माने के लिए नहीं। वीडियो सुरक्षित रखने, प्रीव्यू शेयर करने या डाउनलोड के लिए ईमेल से साइन इन करें। हम 6 अंकों का कोड भेजते हैं, पासवर्ड की ज़रूरत नहीं।',

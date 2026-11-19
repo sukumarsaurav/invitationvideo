@@ -17,6 +17,7 @@
   "dependencies": {
     "@remotion/google-fonts": "4.0.544",
     "@remotion/layout-utils": "4.0.544",
+    "@remotion/media": "4.0.544",
     "@remotion/player": "4.0.544",
     "@remotion/web-renderer": "4.0.544",
     "@supabase/supabase-js": "2.119.0",

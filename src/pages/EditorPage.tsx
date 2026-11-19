@@ -9,6 +9,7 @@ import {
   Download,
   ImagePlus,
   Loader2,
+  Music,
   Pencil,
   Play,
   RotateCw,
@@ -20,6 +21,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/Button';
+import { MusicPicker } from '@/components/MusicPicker';
 import { PhotoCropper } from '@/components/PhotoCropper';
 import { Sheet } from '@/components/Sheet';
 import { useToast } from '@/components/Toast';
@@ -243,6 +245,14 @@ const Editor = ({ def, draftId: initialDraftId, initial }: { def: TemplateDefini
     }));
   const setIncluded = (clipId: string, included: boolean) =>
     setData((d) => ({ ...d, clips: { ...d.clips, [clipId]: { ...d.clips[clipId], included } } }));
+  /** Picking a track plays the video from the start with sound, so the customer hears it straight away. */
+  const setMusic = (music: string) => {
+    tap();
+    setData((d) => ({ ...d, music }));
+    if (!music) return;
+    playerRef.current?.unmute();
+    setTimeout(() => seekToStep(finalStep, true), 0);
+  };
 
   const goToDownload = () => {
     if (!draftId) return;
@@ -398,6 +408,7 @@ const Editor = ({ def, draftId: initialDraftId, initial }: { def: TemplateDefini
                 onShare={share}
                 onDownload={goToDownload}
                 onEditClip={(i) => goTo(i + 1)}
+                onMusic={setMusic}
               />
             )}
             </div>
@@ -773,6 +784,7 @@ const FinalStep = ({
   onShare,
   onDownload,
   onEditClip,
+  onMusic,
 }: {
   def: TemplateDefinition;
   data: VideoData;
@@ -785,6 +797,7 @@ const FinalStep = ({
   onShare: () => void;
   onDownload: () => void;
   onEditClip: (index: number) => void;
+  onMusic: (id: string) => void;
 }) => {
   const { t } = useI18n();
   const estimate = estimateRenderSeconds(getDurationInFrames(def, data), '720p');
@@ -810,6 +823,14 @@ const FinalStep = ({
           </ul>
         </div>
       ) : null}
+
+      <section className="mt-4 rounded-card border border-border bg-surface p-4" aria-labelledby="music-heading">
+        <h3 id="music-heading" className="flex items-center gap-2 font-semibold">
+          <Music className="size-4 text-primary" /> {t('Music')}
+        </h3>
+        <p className="mb-3 text-sm text-muted">{t('Tap a track to hear it with your video.')}</p>
+        <MusicPicker category={def.category} value={data.music} onChange={onMusic} />
+      </section>
 
       <ol className="mt-4 space-y-3">
         <li className="rounded-card border border-border bg-surface p-4">

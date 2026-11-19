@@ -87,6 +87,8 @@ export const renderVideo = async ({
     container: 'mp4',
     videoCodec: 'h264',
     videoBitrate: 'high',
+    // No music chosen: leave the audio track out rather than encoding silence.
+    muted: !data.music,
     scale: scaleFor(quality),
     signal: signal ?? null,
     onProgress: (p) => onProgress({ progress: p.progress, encodedFrames: p.encodedFrames, totalFrames }),

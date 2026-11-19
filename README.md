@@ -10,6 +10,7 @@ preview, and download an HD MP4 that is rendered **in their own browser** with R
 | App | React 19 + Vite + Tailwind CSS v4, mobile-first app shell |
 | Templates | Remotion compositions in `src/templates/<slug>/` |
 | Preview | `@remotion/player` (watermarked) |
+| Music | `@remotion/media` `<Audio>`, tracks in `public/music/` (listed in `src/templates/music.ts`) |
 | HD render | `@remotion/web-renderer` (`renderMediaOnWeb`) in the customer's browser |
 | Database / auth | Supabase, `invites` schema (`supabase/migrations`) |
 | Files | Cloudflare R2 (MinIO locally) — not wired yet |
@@ -99,6 +100,8 @@ service-role/secret key or a Razorpay secret in a `VITE_` variable.
      filled in; everything else starts empty and the video shows the example until the customer types.
    - `holdFrame`: the frame where all of a clip's text is visible (shown while editing).
    - `schema.title`: e.g. `'{bride} & {groom}'`, used in My Videos and share links.
+   - `music`: the track a new video starts with (an id from `src/templates/music.ts`); customers can
+     change it or pick "No music" on the editor's Finish step.
 2. Add its meta to `src/templates/metas.ts` and its definition to `src/templates/registry.ts`.
    Give it `tags` (from `src/templates/taxonomy.ts`), and optionally `trending` / `popularity`.
    These are only starting values: once seeded, the admin panel owns price, name, copy, tags and flags.
@@ -143,6 +146,15 @@ plan, with later phases (payments, refunds, coupons, analytics), is the Admin Pa
 - **While developing:** `localhost` uses the same hosted project, so the same admin accounts and
   authenticator codes work there, and every change is live. Add `http://localhost:5173/**` to the
   project's redirect URLs (Authentication → URL Configuration) if sign-in links should return to it.
+
+## Music
+
+`src/templates/music.ts` lists the tracks and which occasions each suits (suggested ones show first in
+the editor). The four starting tracks are synthesised by `node scripts/generate-music.ts` (needs ffmpeg),
+so they are our own work with nothing to license. To use a licensed recording instead, replace the
+`.m4a` in `public/music/` with an AAC file of the same name, ideally 30 seconds or longer (shorter
+tracks loop). The music fades in and out with the video and is mixed into the HD MP4; videos with
+"No music" are rendered without an audio track.
 
 Template rules for the browser renderer: use text, SVG, linear gradients, transforms, shadows and
 images. Avoid radial gradients. Load fonts through `src/templates/shared/fonts.ts`.

@@ -5,6 +5,7 @@ export const royalWeddingMeta: TemplateMeta = {
   slug: 'royal-maroon-wedding',
   name: 'Royal Maroon Wedding',
   category: 'wedding',
+  music: 'santoor-shubh',
   description: 'Maroon and gold Indian wedding invitation with your names, photo and event details.',
   priceInr: 499,
   fps: 30,

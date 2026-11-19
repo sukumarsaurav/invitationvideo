@@ -64,6 +64,8 @@ export type TemplateSchema = {
 export type VideoData = {
   details: Record<string, string>;
   clips: Record<string, { included: boolean; values: Record<string, string> }>;
+  /** Background music: a track id from templates/music.ts, or '' for none. */
+  music: string;
 };
 
 export type TemplateProps = {
@@ -90,6 +92,8 @@ export type TemplateDefinition = {
   height: number;
   schema: TemplateSchema;
   clips: Record<string, ClipComponent>;
+  /** Music a new video starts with (id from templates/music.ts). Defaults to the first track suggested for the category. */
+  music?: string;
   /** Colours used for the thumbnail card before a real preview image exists. */
   swatch: [string, string];
   /** Slugs from taxonomy.TAGS; each tag has its own landing page. */
